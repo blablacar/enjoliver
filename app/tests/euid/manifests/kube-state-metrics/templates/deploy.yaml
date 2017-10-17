@@ -26,7 +26,7 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         command:
-        - /usr/bin/kube-state-metrics
+        - /kube-state-metrics
         env:
         - name: KUBERNETES_SERVICE_HOST
           value: "172.31.255.255"
