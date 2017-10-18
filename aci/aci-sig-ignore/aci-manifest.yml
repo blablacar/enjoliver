@@ -1,0 +1,11 @@
+name: enjoliver.local/sig-ignore:latest
+aci:
+  dependencies:
+    - enjoliver.local/debian:latest
+
+
+builder:
+  dependencies:
+    - enjoliver.local/builder-hyperkube:latest
+
+
