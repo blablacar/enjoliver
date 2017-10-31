@@ -268,7 +268,7 @@ Requirements:
 All in one dev setup:
 
     # Clone the project inside a valid GOPATH
-    git clone https://github.com/JulienBalestra/enjoliver.git ${GOPATH}/src/github.com/JulienBalestra/enjoliver
+    git clone https://github.com/blablacar/enjoliver.git ${GOPATH}/src/github.com/blablacar/enjoliver
     
     # Be sure the GOPATH is fowarded across Makefiles or do it step by step
     sudo -E make dev_setup

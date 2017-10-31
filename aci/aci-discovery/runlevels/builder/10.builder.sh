@@ -24,7 +24,7 @@ then
     git bundle verify ${HEAD}.bundle
     REMOTE=${SOURCE_PROJECT}/bundles/${HEAD}.bundle
 else
-    REMOTE=https://github.com/JulienBalestra/enjoliver.git
+    REMOTE=https://github.com/blablacar/enjoliver.git
     BRANCH=master
 fi
 

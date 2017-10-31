@@ -1,12 +1,7 @@
 {
-	"ImportPath": "github.com/JulienBalestra/enjoliver/discoveryC",
-	"GoVersion": "go1.7",
+	"ImportPath": "github.com/blablacar/enjoliver/discoveryC",
+	"GoVersion": "go1.8",
 	"GodepVersion": "v77",
-	"Packages": [
-		"github.com/vishvananda/netlink",
-		"github.com/golang/glog",
-		"github.com/vishvananda/netns"
-	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/golang/glog",

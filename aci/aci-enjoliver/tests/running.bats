@@ -2,12 +2,12 @@
 
 
 @test "Tests are OK" {
-  make -C /go/src/github.com/JulienBalestra/enjoliver/app/tests testing.id_rsa
-  make -C /go/src/github.com/JulienBalestra/enjoliver/app/tests check
+  make -C /go/src/github.com/blablacar/enjoliver/app/tests testing.id_rsa
+  make -C /go/src/github.com/blablacar/enjoliver/app/tests check
   [ $? -eq 0 ]
 }
 
 @test "Default config" {
-  /go/src/github.com/JulienBalestra/enjoliver/manage.py show-configs
+  /go/src/github.com/blablacar/enjoliver/manage.py show-configs
   [ $? -eq 0 ]
 }

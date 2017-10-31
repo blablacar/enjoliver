@@ -16,7 +16,7 @@ go version
 
 ### PATH ###
 
-ENJOLIVER=${GOPATH}/src/github.com/JulienBalestra/enjoliver
+ENJOLIVER=${GOPATH}/src/github.com/blablacar/enjoliver
 SOURCE_PROJECT=/opt/source-project
 
 mkdir -pv ${ENJOLIVER} ${ROOTFS}/go/src/github.com/JulienBalestra/
@@ -35,7 +35,7 @@ then
     git bundle verify ${HEAD}.bundle
     REMOTE=${SOURCE_PROJECT}/bundles/${HEAD}.bundle
 else
-    REMOTE=https://github.com/JulienBalestra/enjoliver.git
+    REMOTE=https://github.com/blablacar/enjoliver.git
     BRANCH=master
 fi
 

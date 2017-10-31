@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/JulienBalestra/enjoliver/enjoliver-agent",
+	"ImportPath": "github.com/blablacar/enjoliver/enjoliver-agent",
 	"GoVersion": "go1.8",
 	"GodepVersion": "v77",
 	"Deps": [
@@ -15,7 +15,7 @@
 		},
 		{
 			"ImportPath": "github.com/golang/glog",
-			"Rev": "44145f04b68cf362d9c4df2182967c2275eaefed"
+			"Rev": "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 		},
 		{
 			"ImportPath": "github.com/golang/protobuf/proto",
@@ -23,8 +23,8 @@
 		},
 		{
 			"ImportPath": "github.com/rkt/rkt/api/v1alpha",
-			"Comment": "v1.28.1-12-g142050d",
-			"Rev": "142050d1a558ab07f6eeddea55c0f51053a99b05"
+			"Comment": "v1.29.0-14-g275da72",
+			"Rev": "275da72499e6e3aa36f2ffe99cfa281179e61fbf"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
