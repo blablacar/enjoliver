@@ -21,6 +21,6 @@ restore: $(GODEP)
 	godep restore
 
 clean:
-	rm -v $(TARGET) || true
+	$(RM) $(TARGET)
 
 re: clean $(TARGET)
