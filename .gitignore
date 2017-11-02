@@ -10,7 +10,6 @@ serve
 /app/tests/test_matchbox/groups/*.json
 *.iml
 *.pyc
-/env/
 /app/tests/ipxe.iso
 /app/tests/undionly.kkkpxe
 /discoveryC/discoveryC

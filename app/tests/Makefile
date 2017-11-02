@@ -14,13 +14,18 @@ PROJECT=$(CWD)/../..
 RUNTIME=$(PROJECT)/runtime
 RKT=$(RUNTIME)/rkt/rkt
 
-ENV_NAME=env
-PYTHON=$(PROJECT)/$(ENV_NAME)/bin/python3
+VENV=venv
+PYTHON=$(PROJECT)/$(VENV)/bin/python3
 
 TESTING_RSA=testing.id_rsa
 
+pip: venv
+	$(MAKE) -C $(PROJECT)/$(VENV) $@
 
-check:
+venv:
+	$(MAKE) -C $(PROJECT)/$(VENV) $@
+
+check: pip
 	PATH=$(PROJECT)/env/bin:$(PATH) PYTHONPATH=$(PROJECT) $(PYTHON) -m unittest discover ./
 
 
@@ -38,10 +43,10 @@ create_rack0:
 		--exec /bin/bash -- -c exit 0
 
 gc:
-	$(RKT) --local-config=$(CWD) gc --grace-period=0s
+	-$(RKT) --local-config=$(CWD) gc --grace-period=0s
 
 gci:
-	$(RKT) --local-config=$(CWD) image gc --grace-period=0s
+	-$(RKT) --local-config=$(CWD) image gc --grace-period=0s
 
 $(TESTING_RSA):
 	ssh-keygen -f $(CWD)/$(TESTING_RSA) -t rsa -N ''
@@ -49,17 +54,17 @@ $(TESTING_RSA):
 	ln -svf $(CWD)/$(TESTING_RSA).pub $(CWD)/test_matchbox/ssh_authorized_keys/
 
 clean:
-	rm -v $(ISO) || true
-	rm -v $(KKK) || true
-	rm -v $(TESTING_RSA)* || true
-	rm -Rfv test_matchbox/ssh_authorized_keys || true
-	rm -v paths.d/*.json || true
-	rm -Rfv euid/ignition_journal || true
-	rm -Rfv euid/euid.sqlite || true
-	rm -Rfv inte/ignition_journal || true
-	rm -Rfv inte/dbs || true
-	rm -Rfv unit/ignition_journal || true
-	rm -Rfv unit/dbs || true
+	$(RM) $(ISO)
+	$(RM) $(KKK)
+	$(RM) $(TESTING_RSA)*
+	$(RM) -R test_matchbox/ssh_authorized_keys
+	$(RM) paths.d/*.json
+	$(RM) -R euid/ignition_journal
+	$(RM) -R euid/euid.sqlite
+	$(RM) -R inte/ignition_journal
+	$(RM) -R inte/dbs
+	$(RM) -R unit/ignition_journal
+	$(RM) -R unit/dbs
 
 fclean: clean gci gc
 

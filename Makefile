@@ -2,8 +2,10 @@ CWD=$(shell pwd)
 CHECK=check
 CHECK_EUID=check_euid
 CHECK_EUID_KVM_PLAYER=check_euid_kvm_player
-ENV=$(CWD)/env
+VENV=venv
 MY_USER=${SUDO_USER}
+
+.PHONY: $(VENV)
 
 default: help
 
@@ -35,77 +37,75 @@ apt:
 	test $(shell id -u -r) -eq 0
 	DEBIAN_FRONTEND=noninteractive INSTALL="-y" ./apt.sh
 
-$(ENV):
-	./virtualenv.sh
+$(VENV):
+	$(MAKE) -C $(VENV) venv
 
-pip: $(ENV)
-	$(ENV)/bin/pip3 install -U setuptools
-	$(ENV)/bin/pip3 install -Ir requirements.txt
-	$(ENV)/bin/pip3 install py-vendor/ipaddr-py/
+pip: $(VENV)
+	$(MAKE) -C $(VENV) pip
 
 acserver:
 	test $(shell id -u -r) -eq 0
-	make -C $(CWD)/runtime/ create_rack0
+	$(MAKE) -C $(CWD)/runtime/ create_rack0
 	./runtime/run_acserver.py &
 
 aci_core: acserver
-	make -C aci core
+	$(MAKE) -C aci core
 	pkill -F $(CWD)/runtime/acserver.pid || true
 
 aci: acserver
-	make -C aci kube_deps
+	$(MAKE) -C aci kube_deps
 	pkill -F $(CWD)/runtime/acserver.pid || true
 
 assets:
-	make -C matchbox/assets/discoveryC
-	make -C matchbox/assets/enjoliver-agent
+	$(MAKE) -C matchbox/assets/discoveryC
+	$(MAKE) -C matchbox/assets/enjoliver-agent
 
 remove_aci:
 	test $(shell id -u -r) -eq 0
-	make -C runtime gc
-	make -C runtime gci
+	$(MAKE) -C runtime gc
+	$(MAKE) -C runtime gci
 	rm -Rf runtime/target/*
 	rm -Rf runtime/acserver.d/enjoliver.local/*
 
 clean_after_assets:
-	make -C discoveryC clean
-	make -C enjoliver-agent clean
+	$(MAKE) -C discoveryC clean
+	$(MAKE) -C enjoliver-agent clean
 
-fclean: clean_after_assets clean check_clean
-	rm -Rf $(ENV)
+check_clean:
+	$(MAKE) -C app/tests/ fclean
+
+clean: clean_after_assets check_clean
+	$(MAKE) -C $(VENV) clean
 	rm -Rf runtime/acserver.d/*
 	rm -Rf runtime/target/*
 
-check_clean:
-	make -C app/tests/ fclean
-
 $(CHECK):
-	make -C discoveryC/ $(CHECK)
-	make -C enjoliver-agent/ $(CHECK)
-	make -C app/tests/ $(CHECK)
+	$(MAKE) -C discoveryC/ $(CHECK)
+	$(MAKE) -C enjoliver-agent/ $(CHECK)
+	$(MAKE) -C app/tests/ $(CHECK)
 
 $(CHECK_EUID): validate
 	test $(shell id -u -r) -eq 0
-	make -C app/tests/ $(CHECK_EUID)
+	$(MAKE) -C app/tests/ $(CHECK_EUID)
 
 $(CHECK_EUID_KVM_PLAYER):
 	test $(shell id -u -r) -eq 0
-	make -C app/tests/ $(CHECK_EUID_KVM_PLAYER)
+	$(MAKE) -C app/tests/ $(CHECK_EUID_KVM_PLAYER)
 
 submodules:
 	git submodule update --init --recursive
 
 validate:
-	@./validate.py
+	./validate.py
 
 dev_setup_runtime: submodules
-	make -C runtime dev_setup
+	$(MAKE) -C runtime dev_setup
 
 prod_setup_runtime:
-	make -C runtime prod_setup
+	$(MAKE) -C runtime prod_setup
 
 front:
-	make -C enjoliver-ui
+	$(MAKE) -C enjoliver-ui
 
 config:
 	mkdir -pv $(HOME)/.config/enjoliver
@@ -113,7 +113,7 @@ config:
 	touch $(HOME)/.config/enjoliver/config.json
 
 container_linux: acserver
-	make -C aci/aci-container-linux install
+	$(MAKE) -C aci/aci-container-linux install
 	./runtime/runtime.rkt run --set-env=COMMIT_ID=$(shell git log --pretty=format:'%h' -n 1) \
 	  --volume enjoliver,kind=host,source=$(CWD),readOnly=false \
       --stage1-path=$(CWD)/runtime/rkt/stage1-fly.aci --insecure-options=all \
@@ -131,14 +131,15 @@ dev_setup:
 	su -m $(MY_USER) -c "make -C $(CWD) front"
 	su -m $(MY_USER) -c "make -C $(CWD) pip"
 	su -m $(MY_USER) -c "make -C $(CWD) assets"
-	make -C $(CWD) aci
-	make -C $(CWD) container_linux
+	$(MAKE) -C $(CWD) aci
+	$(MAKE) -C $(CWD) container_linux
 	su -m $(MY_USER) -c "make -C $(CWD) validate"
 	su -m $(MY_USER) -c "make -C $(CWD) config"
 	chown -R $(MY_USER): $(CWD)
 
 prod_setup:
-	make -C $(CWD) submodules
-	make -C $(CWD) prod_setup_runtime
-	make -C $(CWD) front
-	make -C $(CWD) pip
+	$(MAKE) -C $(CWD) submodules
+	$(MAKE) -C $(CWD) prod_setup_runtime
+	$(MAKE) -C $(CWD) front
+	$(MAKE) -C $(CWD) pip
+

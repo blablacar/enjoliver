@@ -12,5 +12,4 @@ PyYAML==3.12
 cockroachdb==0.1.0
 deepdiff==3.3.0
 flasgger==0.6.6
-
-#ipaddr==2.1.11 # Inside py-vendor/
+pytest==3.2.3
