@@ -1,9 +1,16 @@
 CWD=$(shell pwd)
+UNAME=$(shell uname)
+ifeq ($(UNAME), Linux)
+GO_ARCH=linux-amd64
+endif
+ifeq ($(UNAME), Darwin)
+GO_ARCH=darwin-amd64
+endif
 
 # DGR
 DGR_VERSION=v86
 DGR_GITHUB_DOWNLOAD=https://github.com/blablacar/dgr/releases/download
-DGR_TAR=dgr-$(DGR_VERSION)-linux-amd64.tar.gz
+DGR_TAR=dgr-$(DGR_VERSION)-$(GO_ARCH).tar.gz
 DGR_GITHUB=$(DGR_GITHUB_DOWNLOAD)/$(DGR_VERSION)/$(DGR_TAR)
 DGR_DIR=$(CWD)/dgr
 DGR=$(DGR_DIR)/dgr
@@ -22,7 +29,7 @@ RKT_DATASTORE=/tmp/rkt-data
 # MATCHBOX
 MATCHBOX_VERSION=v0.5.0
 MATCHBOX_GITHUB_DOWNLOAD=https://github.com/coreos/matchbox/releases/download
-MATCHBOX_TAR=matchbox-$(MATCHBOX_VERSION)-linux-amd64.tar.gz
+MATCHBOX_TAR=matchbox-$(MATCHBOX_VERSION)-$(GO_ARCH).tar.gz
 MATCHBOX_GITHUB=$(MATCHBOX_GITHUB_DOWNLOAD)/$(MATCHBOX_VERSION)/$(MATCHBOX_TAR)
 MATCHBOX_DIR=$(CWD)/matchbox
 MATCHBOX=$(MATCHBOX_DIR)/matchbox
@@ -31,7 +38,7 @@ MATCHBOX_DOWNLOAD_TAR=$(MATCHBOX_DIR)/$(MATCHBOX_TAR)
 # HELM
 HELM_VERSION=v2.5.0
 HELM_GOOGLE_STORAGE_DOWNLOAD=https://storage.googleapis.com/kubernetes-helm
-HELM_TAR=helm-$(HELM_VERSION)-linux-amd64.tar.gz
+HELM_TAR=helm-$(HELM_VERSION)-$(GO_ARCH).tar.gz
 HELM_GOOGLE_STORAGE=$(HELM_GOOGLE_STORAGE_DOWNLOAD)/$(HELM_TAR)
 HELM_DIR=$(CWD)/helm
 HELM=$(HELM_DIR)/helm

@@ -19,7 +19,6 @@ import objs3
 import smartdb
 from model import Healthz
 
-LIBC = ctypes.CDLL("libc.so.6")  # TODO deep inside the SQLITE sync
 logger = logging.getLogger(__name__)
 
 
@@ -66,7 +65,7 @@ def backup_sqlite(cache, application):
         timeout = math.ceil(source_st.st_size / (1024 * 1024.))
         logger.info("Backup lock key set with timeout == %ss" % timeout)
         cache.set(application.config["BACKUP_LOCK_KEY"], resp["dest_fs"], timeout=timeout)
-        LIBC.sync()
+        os.system('sync')
         shutil.copy2(db_path, resp["dest_fs"])
         dest_st = os.stat(resp["dest_fs"])
         resp["size"], resp["copy"] = dest_st.st_size, True
