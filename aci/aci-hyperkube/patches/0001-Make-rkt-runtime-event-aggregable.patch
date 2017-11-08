@@ -1,0 +1,58 @@
+From baf810b5c074ff65c647ad3e477f00c43fbe575d Mon Sep 17 00:00:00 2001
+From: Olivier Biesmans <olivier.biesmans@blablacar.com>
+Date: Wed, 8 Nov 2017 10:59:15 +0100
+Subject: [PATCH] Make rkt runtime event aggregable
+
+---
+ pkg/kubelet/rkt/rkt.go | 17 ++++-------------
+ 1 file changed, 4 insertions(+), 13 deletions(-)
+
+diff --git a/pkg/kubelet/rkt/rkt.go b/pkg/kubelet/rkt/rkt.go
+index d16c92db31..aaacdf4999 100644
+--- a/pkg/kubelet/rkt/rkt.go
++++ b/pkg/kubelet/rkt/rkt.go
+@@ -64,7 +64,6 @@ import (
+ 	"k8s.io/kubernetes/pkg/securitycontext"
+ 	utilexec "k8s.io/kubernetes/pkg/util/exec"
+ 	"k8s.io/kubernetes/pkg/util/selinux"
+-	utilstrings "k8s.io/kubernetes/pkg/util/strings"
+ 	"k8s.io/kubernetes/pkg/util/term"
+ )
+ 
+@@ -1255,29 +1254,21 @@ func (r *Runtime) generateEvents(runtimePod *kubecontainer.Pod, reason string, f
+ 	// Set up container references.
+ 	for _, c := range runtimePod.Containers {
+ 		containerID := c.ID
+-		id, err := parseContainerID(containerID)
+-		if err != nil {
+-			glog.Warningf("Invalid container ID %q", containerID)
+-			continue
+-		}
+-
+ 		ref, ok := r.containerRefManager.GetRef(containerID)
+ 		if !ok {
+ 			glog.Warningf("No ref for container %q", containerID)
+ 			continue
+ 		}
+ 
+-		// Note that 'rkt id' is the pod id.
+-		uuid := utilstrings.ShortenString(id.uuid, 8)
+ 		switch reason {
+ 		case "Created":
+-			r.recorder.Eventf(events.ToObjectReference(ref), v1.EventTypeNormal, events.CreatedContainer, "Created with rkt id %v", uuid)
++			r.recorder.Eventf(events.ToObjectReference(ref), v1.EventTypeNormal, events.CreatedContainer, "Created Container")
+ 		case "Started":
+-			r.recorder.Eventf(events.ToObjectReference(ref), v1.EventTypeNormal, events.StartedContainer, "Started with rkt id %v", uuid)
++			r.recorder.Eventf(events.ToObjectReference(ref), v1.EventTypeNormal, events.StartedContainer, "Started Container")
+ 		case "Failed":
+-			r.recorder.Eventf(events.ToObjectReference(ref), v1.EventTypeWarning, events.FailedToStartContainer, "Failed to start with rkt id %v with error %v", uuid, failure)
++			r.recorder.Eventf(events.ToObjectReference(ref), v1.EventTypeWarning, events.FailedToStartContainer, "Failed to start container with error %v", failure)
+ 		case "Killing":
+-			r.recorder.Eventf(events.ToObjectReference(ref), v1.EventTypeNormal, events.KillingContainer, "Killing with rkt id %v", uuid)
++			r.recorder.Eventf(events.ToObjectReference(ref), v1.EventTypeNormal, events.KillingContainer, "Killing Container")
+ 		default:
+ 			glog.Errorf("rkt: Unexpected event %q", reason)
+ 		}
+-- 
+2.15.0
+
