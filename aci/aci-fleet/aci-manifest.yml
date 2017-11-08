@@ -2,6 +2,7 @@ name: enjoliver.local/fleet:1.0.0
 
 builder:
   dependencies:
+    - enjoliver.local/builder-hyperkube:latest
     - enjoliver.local/upx:latest
 
 aci:
