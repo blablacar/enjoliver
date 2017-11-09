@@ -1,8 +1,7 @@
 import unittest
 
-from common import posts
-
 from app import smartdb, model
+from app.tests.common import posts
 from model import MachineInterface, Machine, Schedule, ScheduleRoles
 from repositories.machine_discovery_repo import DiscoveryRepository
 from repositories.machine_schedule_repo import ScheduleRepository

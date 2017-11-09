@@ -7,7 +7,7 @@ import time
 
 from app import api
 from app import configs
-from common import posts
+from app.tests.common import posts
 
 ec = configs.EnjoliverConfig(importer=__file__)
 

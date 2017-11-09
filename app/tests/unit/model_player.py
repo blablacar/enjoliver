@@ -6,7 +6,7 @@ import ops
 from app import configs
 from app import crud
 from app import model
-from common import posts
+from app.tests.common import posts
 
 ec = configs.EnjoliverConfig()
 
@@ -85,7 +85,7 @@ class TestModel(unittest.TestCase):
             }
         }
         # e = {'kubernetes-control-plane': 0, 'kubernetes-node': 0, 'etcd-member': 1}
-        self.repositories.machine_schedule.create_schedule(s)        
+        self.repositories.machine_schedule.create_schedule(s)
         e = self.repositories.machine_schedule.get_all_schedules()
         self.assertEqual({mac: [u"etcd-member"]}, e)
         self.assertEqual([u"etcd-member"], self.repositories.machine_schedule.get_roles_by_mac_selector(mac))
@@ -99,7 +99,7 @@ class TestModel(unittest.TestCase):
             }
         }
         # e = {'kubernetes-control-plane': 0, 'kubernetes-node': 0, 'etcd-member': 2}
-        self.repositories.machine_schedule.create_schedule(s)        
+        self.repositories.machine_schedule.create_schedule(s)
         self.assertEqual([u"etcd-member"], self.repositories.machine_schedule.get_roles_by_mac_selector(mac))
 
     def test_12(self):
@@ -292,7 +292,7 @@ class TestModel(unittest.TestCase):
             }
         }
         # e = {'kubernetes-control-plane': 2, 'kubernetes-node': 3, 'etcd-member': 5}
-        self.repositories.machine_schedule.create_schedule(s)        
+        self.repositories.machine_schedule.create_schedule(s)
         self.assertEqual(["kubernetes-control-plane", "etcd-member"],
                          self.repositories.machine_schedule.get_roles_by_mac_selector(mac))
 

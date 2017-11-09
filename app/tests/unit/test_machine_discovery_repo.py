@@ -2,7 +2,7 @@ import copy
 import unittest
 
 from app import smartdb, model
-from common import posts
+from app.tests.common import posts
 from model import MachineInterface, Machine, MachineDisk, Chassis, ChassisPort
 from repositories.machine_discovery_repo import DiscoveryRepository
 

@@ -1,17 +1,17 @@
 """
 Sync the matchbox configuration
 """
+from ipaddress import IPv4Network, IPv4Address
 import json
+import logging
 import os
 import re
-
-import ipaddr
-import requests
 import time
+
+import requests
 from werkzeug.contrib.cache import SimpleCache, NullCache
 
 import generator
-import logging
 import schedulerv2
 from configs import EnjoliverConfig
 
@@ -92,30 +92,36 @@ class ConfigSyncSchedules(object):
             logger.error("error during the split rack/pos %s" % s[0])
         return d
 
+    # TODO: move the range* to an array of 'ranges'.
     @staticmethod
-    def cni_ipam(host_cidrv4: str, host_gateway: str):
+    def _cni_ipam(host_cidrv4: str, host_gateway: str):
         """
+        see: https://github.com/containernetworking/cni/blob/master/SPEC.md#ip-allocation
+        see: https://github.com/containernetworking/plugins/tree/master/plugins/ipam/host-local
         With the class variables provide a way to generate a static host-local ipam
         :param host_cidrv4:
         :param host_gateway:
         :return: dict
         """
-        host = ipaddr.IPNetwork(host_cidrv4)
+
+        # host = IPv4Network(host_cidrv4)
+        host = IPv4Network(host_cidrv4, strict=False)
         subnet = host
-        ip_cut = int(host.ip.__str__().split(".")[-1])
         if ConfigSyncSchedules.sub_ips:
-            sub = ipaddr.IPNetwork(host.network).ip + (ip_cut * ConfigSyncSchedules.sub_ips)
-            host = ipaddr.IPNetwork(sub)
+            ip_cut = int(host.ip.__str__().split(".")[-1])
+            sub = IPv4Network(host.network).ip + (ip_cut * ConfigSyncSchedules.sub_ips)
+            host = IPv4Network(sub)
+
         range_start = host.ip + ConfigSyncSchedules.skip_ips
         range_end = range_start + ConfigSyncSchedules.range_nb_ips
         ipam = {
             "type": "host-local",
-            "subnet": "%s/%s" % (subnet.network.__str__(), subnet.prefixlen),
-            "rangeStart": range_start.__str__(),
-            "rangeEnd": range_end.__str__(),
+            "subnet": str(subnet),
+            "rangeStart": str(range_start),
+            "rangeEnd": str(range_end),
             "gateway": host_gateway,
             "routes": [
-                {"dst": "%s/32" % EC.perennial_local_host_ip, "gw": ipaddr.IPNetwork(host_cidrv4).ip.__str__()},
+                {"dst": "%s/32" % EC.perennial_local_host_ip, "gw": IPv4Network(host_cidrv4).ip.__str__()},
                 {"dst": "0.0.0.0/0"},
             ],
             "dataDir": "/var/lib/cni/networks"
@@ -220,7 +226,14 @@ class ConfigSyncSchedules(object):
 
         return ladder[-1][0]
 
-    def produce_matchbox_data(self, marker: str, i: int, m: dict, automatic_name: str, update_extra_metadata=None):
+    def produce_matchbox_data(
+            self,
+            marker: str,
+            i: int,
+            m: dict,
+            automatic_name: str,
+            update_extra_metadata=None
+    ):
         fqdn = automatic_name
         try:
             if m["fqdn"]:
@@ -231,7 +244,7 @@ class ConfigSyncSchedules(object):
         etc_hosts = [k for k in EC.etc_hosts]
         dns_attr = self.get_dns_attr(fqdn)
         etc_hosts.append("127.0.1.1 %s %s" % (fqdn, dns_attr["shortname"]))
-        cni_attr = self.cni_ipam(m["cidrv4"], m["gateway"])
+        cni_attr = self._cni_ipam(m["cidrv4"], m["gateway"])
         extra_metadata = {
             "etc_hosts": etc_hosts,
             # Etcd
