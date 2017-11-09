@@ -1,0 +1,68 @@
+From 6bed54562eac90ef806620a7df7f3c5017cf73b1 Mon Sep 17 00:00:00 2001
+From: bob <bob@blablacar.com>
+Date: Tue, 7 Nov 2017 17:03:33 +0100
+Subject: [PATCH] [SIGHUP] - Change the way we handle the reconnect to etcd
+ after a config reload
+
+---
+ fleetd/fleetd.go | 3 +--
+ server/server.go | 8 +++-----
+ 2 files changed, 4 insertions(+), 7 deletions(-)
+
+diff --git a/fleetd/fleetd.go b/fleetd/fleetd.go
+index 1cfd06ba..07d99444 100644
+--- a/fleetd/fleetd.go
++++ b/fleetd/fleetd.go
+@@ -124,7 +124,6 @@ func Main() {
+ 		}
+ 
+ 		log.Infof("Restarting server components")
+-		srv.SetReconfigServer(true)
+ 
+ 		// Get Server.listeners[] to keep it for a new server,
+ 		// before killing the old server.
+@@ -137,7 +136,7 @@ func Main() {
+ 		if err != nil {
+ 			log.Fatal(err)
+ 		}
+-
++		srv.SetReconfigServer(true)
+ 		srv.Run()
+ 		srv.SetReconfigServer(false)
+ 	}
+diff --git a/server/server.go b/server/server.go
+index 4e2c1b65..606a65fe 100644
+--- a/server/server.go
++++ b/server/server.go
+@@ -207,7 +207,7 @@ func (s *Server) Run() {
+ 
+ 	var err error
+ 	for sleep := time.Second; ; sleep = pkg.ExpBackoff(sleep, time.Minute) {
+-		if s.restartServer {
++		if s.restartServer || s.reconfigServer {
+ 			_, err = s.hrt.Beat(s.mon.TTL)
+ 			if err == nil {
+ 				log.Infof("hrt.Beat() success")
+@@ -220,7 +220,7 @@ func (s *Server) Run() {
+ 				break
+ 			}
+ 		}
+-		log.Warningf("Server register machine failed: %v, retrying in %d sec.", err, sleep)
++		log.Warningf("Server register machine failed: %v, retrying in %s", err, sleep.String())
+ 		time.Sleep(sleep)
+ 	}
+ 
+@@ -289,9 +289,7 @@ func (s *Server) Supervise() {
+ 
+ // Kill is used to gracefully terminate the server by triggering the Monitor to shut down
+ func (s *Server) Kill() {
+-	if !s.reconfigServer {
+-		close(s.killc)
+-	}
++	close(s.killc)
+ }
+ 
+ func (s *Server) Purge() {
+-- 
+2.14.2
+
