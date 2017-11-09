@@ -3,6 +3,7 @@ CHECK=check
 CHECK_EUID=check_euid
 CHECK_EUID_KVM_PLAYER=check_euid_kvm_player
 VENV=venv
+SHELL=bash
 MY_USER=${SUDO_USER}
 
 .PHONY: $(VENV)
@@ -39,9 +40,6 @@ apt:
 
 $(VENV):
 	$(MAKE) -C $(VENV) venv
-
-pip: $(VENV)
-	$(MAKE) -C $(VENV) pip
 
 acserver:
 	test $(shell id -u -r) -eq 0
@@ -95,8 +93,8 @@ $(CHECK_EUID_KVM_PLAYER):
 submodules:
 	git submodule update --init --recursive
 
-validate:
-	./validate.py
+validate: $(VENV)
+	$(VENV)/bin/python3 validate.py
 
 dev_setup_runtime: submodules
 	$(MAKE) -C runtime dev_setup

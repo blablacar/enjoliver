@@ -1,12 +1,17 @@
+PYTHON=python3.5
+
 default:
-	@echo targets: venv pip clean
+	@echo targets: venv clean
 
-venv:
-	[[ -d bin ]] || python3.6 -mvenv . | true
+venv: bin/activate bin/pip
 
-pip: venv
-	bin/pip install -U setuptools
-	bin/pip install -Ur requirements.txt
+bin/activate:
+	$(PYTHON) -mvenv .
+	
+bin/pip: requirements.txt
+	$@ install -U wheel setuptools
+	$@ install -Ur $<
+	touch $@
 
 clean:
-	rm -rf bin lib include share pyvenv.cfg
+	$(RM) -r bin lib lib64 include share pyvenv.cfg
