@@ -7,16 +7,16 @@ import signal
 import sys
 import time
 
-PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
-APP_PATH = os.path.join(PROJECT_PATH, "app")
-PYTHON = os.path.join(PROJECT_PATH, "env/bin/python3")
-sys.path.append(APP_PATH)
+#PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
+#APP_PATH = os.path.join(PROJECT_PATH, "app")
+#PYTHON = os.path.join(PROJECT_PATH, "env/bin/python3")
+#sys.path.append(APP_PATH)
 
-for p in os.listdir(os.path.join(PROJECT_PATH, "env/lib/")):
-    PYTHON_LIB = os.path.join(PROJECT_PATH, "env/lib/%s/site-packages" % p)
-    sys.path.append(PYTHON_LIB)
+#for p in os.listdir(os.path.join(PROJECT_PATH, "env/lib/")):
+#    PYTHON_LIB = os.path.join(PROJECT_PATH, "env/lib/%s/site-packages" % p)
+#    sys.path.append(PYTHON_LIB)
 
-from app import (
+from enjoliver import (
     configs,
     smartdb,
     ops,

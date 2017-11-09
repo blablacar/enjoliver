@@ -1,0 +1,15 @@
+{
+  "id": "discovery",
+  "metadata": {
+    "api_uri": "http://127.0.0.1:5000",
+    "coreos_install_base_url": "http://enjoliver.local:5000/assets/coreos",
+    "etc_hosts": [
+      "172.20.0.1 enjoliver.local"
+    ],
+    "extra_selectors": "os=installed",
+    "lldp_image_url": "enjoliver.local/lldp:latest",
+    "ssh_authorized_keys": []
+  },
+  "name": "discovery",
+  "profile": "discovery"
+}
