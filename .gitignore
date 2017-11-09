@@ -18,6 +18,7 @@
 /discoveryC/dist/
 /ectl/ectl
 /enjoliver-agent/enjoliver-agent
+/enjoliver-api/.cache/
 /enjoliver-api/.tox/
 /enjoliver-api/ignition_journal/
 /enjoliver-api/prometheus_multiproc_dir
