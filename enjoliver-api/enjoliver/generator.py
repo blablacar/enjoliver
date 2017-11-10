@@ -1,4 +1,3 @@
-import abc
 import json
 import logging
 import os
@@ -9,11 +8,10 @@ import deepdiff
 from enjoliver.configs import EnjoliverConfig
 
 ec = EnjoliverConfig(importer=__file__)
-
 logger = logging.getLogger(__name__)
 
 
-class Generator(object):
+class Generator:
     """
     Generator ensure the coherence from group -> profile -> ignition
     """
@@ -57,17 +55,14 @@ class Generator(object):
         self.group.dump()
 
 
-class GenerateCommon(object):
+class GenerateCommon:
     """
     Common set of methods used to generate groups and profiles
     """
-    __metaclass__ = abc.ABCMeta
     _target_data = None
-    _raise_enof = IOError
 
-    @abc.abstractmethod
     def generate(self):
-        return
+        raise NotImplementedError()
 
     @property
     def target_data(self):
@@ -105,12 +100,13 @@ class GenerateCommon(object):
     @staticmethod
     def _ensure_directory(path):
         if os.path.isdir(path) is False:
-            raise IOError("%s not a valid as directory" % path)
+            raise IOError("%s not a valid directory" % path)
         return path
 
-    def _ensure_file(self, path):
+    @staticmethod
+    def _ensure_file(path):
         if os.path.isfile(path) is False:
-            raise self._raise_enof("%s not a valid as file" % path)
+            raise IOError("%s not a valid file" % path)
         return path
 
 
@@ -165,7 +161,7 @@ class GenerateProfile(GenerateCommon):
 
     def generate(self):
         self._boot()
-        logger.debug("done: %s" % self._target_data["name"])
+        logger.debug("done: %s", self._target_data["name"])
         return self.target_data
 
 
@@ -173,15 +169,16 @@ class GenerateGroup(GenerateCommon):
     def __repr__(self):
         return "GenGroup[%s]" % self._target_data["id"]
 
-    def __init__(self,
-                 api_uri: str,
-                 _id: str,
-                 name: str,
-                 profile: str,
-                 matchbox_path: str,
-                 selector=None,
-                 metadata=None,
-                 ):
+    def __init__(
+            self,
+            api_uri: str,
+            _id: str,
+            name: str,
+            profile: str,
+            matchbox_path: str,
+            selector=None,
+            metadata=None,
+    ):
         self.api_uri = api_uri
         self._ensure_directory(matchbox_path)
         self.target_path = self._ensure_directory("%s/groups" % matchbox_path)

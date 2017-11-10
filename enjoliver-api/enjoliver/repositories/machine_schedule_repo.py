@@ -23,9 +23,10 @@ class ScheduleRepository:
         #     }
         # }
         try:
-            _ = schedule_data["selector"]["mac"]
-            _ = schedule_data["roles"]
-        except KeyError as e:
+            assert 'selector' in schedule_data
+            assert 'mac' in schedule_data['selector']
+            assert 'roles' in schedule_data
+        except AssertionError as e:
             err_msg = "missing keys in schedule data: '%s'" % e
             logger.error(err_msg)
             raise TypeError(err_msg)
