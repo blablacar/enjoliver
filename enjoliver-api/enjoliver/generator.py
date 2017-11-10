@@ -103,12 +103,12 @@ class GenerateCommon(object):
         return True
 
     @staticmethod
-    def ensure_directory(path):
+    def _ensure_directory(path):
         if os.path.isdir(path) is False:
             raise IOError("%s not a valid as directory" % path)
         return path
 
-    def ensure_file(self, path):
+    def _ensure_file(self, path):
         if os.path.isfile(path) is False:
             raise self._raise_enof("%s not a valid as file" % path)
         return path
@@ -128,14 +128,14 @@ class GenerateProfile(GenerateCommon):
 
         self.api_uri = api_uri
         self.pxe_redirect = pxe_redirect
-        self.ensure_directory(matchbox_path)
-        self.ensure_directory("%s/ignition" % matchbox_path)
+        self._ensure_directory(matchbox_path)
+        self._ensure_directory("%s/ignition" % matchbox_path)
         try:
-            self.ensure_file("%s/ignition/%s" % (matchbox_path, ignition_id))
+            self._ensure_file("%s/ignition/%s" % (matchbox_path, ignition_id))
         except Warning:
             logger.warning("not here %s/ignition/%s\n" % (matchbox_path, ignition_id))
 
-        self.target_path = self.ensure_directory("%s/profiles" % matchbox_path)
+        self.target_path = self._ensure_directory("%s/profiles" % matchbox_path)
         self._target_data = {
             "id": "%s" % _id,
             "name": "%s" % name,
@@ -183,8 +183,8 @@ class GenerateGroup(GenerateCommon):
                  metadata=None,
                  ):
         self.api_uri = api_uri
-        self.ensure_directory(matchbox_path)
-        self.target_path = self.ensure_directory("%s/groups" % matchbox_path)
+        self._ensure_directory(matchbox_path)
+        self.target_path = self._ensure_directory("%s/groups" % matchbox_path)
         self.ssh_authorized_keys_dir = "%s/ssh_authorized_keys" % matchbox_path
         self.extra_selector = None if not selector else dict(selector)
         self.extra_metadata = {} if not metadata else dict(metadata)

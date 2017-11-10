@@ -2,10 +2,8 @@ import datetime
 import time
 import unittest
 
-from app import configs
-from app import crud
-from app import model
-from app.tests.common import posts
+from enjoliver import configs, crud, model
+from tests.fixtures import posts
 
 from enjoliver import ops
 
