@@ -7,7 +7,7 @@ import requests
 import sys
 import time
 
-from app import generator
+from enjoliver import generator
 
 
 # ec = configs.EnjoliverConfig(importer=__file__)

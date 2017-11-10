@@ -137,7 +137,7 @@ def healthz(application, smart: smartdb.SmartDatabaseClient, request):
         req = requests.get("%s%s" % (application.config["MATCHBOX_URI"], ignition_url))
         req.close()
         # Later parse the result to improve the coverage of this check
-        _ = json.loads(req.content.decode())
+        json.loads(req.content.decode())
 
         if req.status_code != 200:
             raise AssertionError("%s returned a bad status code: %d" % (ignition_url, req.status_code))

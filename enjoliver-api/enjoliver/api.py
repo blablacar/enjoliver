@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import sys
@@ -21,7 +20,7 @@ CACHE = FileSystemCache(EC.werkzeug_fs_cache_dir)
 
 logger = logging.getLogger(__name__)
 
-app = application = Flask(__name__)
+app = Flask(__name__)
 jinja_options = app.jinja_options.copy()
 jinja_options.update(dict(
     block_start_string='<%',
@@ -35,14 +34,14 @@ app.jinja_options = jinja_options
 
 Swagger(app)
 
-application.config["MATCHBOX_URI"] = EC.matchbox_uri
-application.config["API_URI"] = EC.api_uri
-application.config["MATCHBOX_URLS"] = EC.matchbox_urls
-application.config["DB_PATH"] = EC.db_path
-ignition_journal = application.config["IGNITION_JOURNAL_DIR"] = EC.ignition_journal_dir
-application.config["BACKUP_BUCKET_NAME"] = EC.backup_bucket_name
-application.config["BACKUP_BUCKET_DIRECTORY"] = EC.backup_bucket_directory
-application.config["BACKUP_LOCK_KEY"] = EC.backup_lock_key
+app.config["MATCHBOX_URI"] = EC.matchbox_uri
+app.config["API_URI"] = EC.api_uri
+app.config["MATCHBOX_URLS"] = EC.matchbox_urls
+app.config["DB_PATH"] = EC.db_path
+app.config["IGNITION_JOURNAL_DIR"] = EC.ignition_journal_dir
+app.config["BACKUP_BUCKET_NAME"] = EC.backup_bucket_name
+app.config["BACKUP_BUCKET_DIRECTORY"] = EC.backup_bucket_directory
+app.config["BACKUP_LOCK_KEY"] = EC.backup_lock_key
 
 SMART = SmartDatabaseClient
 # repositories
@@ -55,14 +54,14 @@ if __name__ == '__main__' or "gunicorn" in os.getenv("SERVER_SOFTWARE", ""):
     handler.setFormatter(fmt)
     app.logger.addHandler(handler)
     app.logger.setLevel(EC.logging_level)
-    monitoring.monitor_flask(application)
+    monitoring.monitor_flask(app)
 
     SMART = SmartDatabaseClient(EC.db_uri)
     # repositories
     repositories = RepositoriesRegister(SMART)
 
 
-@application.route("/shutdown", methods=["POST"])
+@app.route("/shutdown", methods=["POST"])
 def shutdown():
     """
     Shutdown
@@ -77,8 +76,8 @@ def shutdown():
     return ops.shutdown(EC)
 
 
-@application.route("/configs", methods=["GET"])
-@application.route("/config", methods=["GET"])
+@app.route("/configs", methods=["GET"])
+@app.route("/config", methods=["GET"])
 def configs():
     """
     Configs
@@ -93,7 +92,7 @@ def configs():
     return jsonify(EC.__dict__)
 
 
-@application.route("/lifecycle/ignition/<string:request_raw_query>", methods=["POST"])
+@app.route("/lifecycle/ignition/<string:request_raw_query>", methods=["POST"])
 def submit_lifecycle_ignition(request_raw_query):
     """
     Lifecycle Ignition
@@ -134,7 +133,7 @@ def submit_lifecycle_ignition(request_raw_query):
     return op(caller=request.url_rule)
 
 
-@application.route("/lifecycle/rolling/<string:request_raw_query>", methods=["GET"])
+@app.route("/lifecycle/rolling/<string:request_raw_query>", methods=["GET"])
 def report_lifecycle_rolling(request_raw_query):
     """
     Lifecycle Rolling Update
@@ -179,7 +178,7 @@ def report_lifecycle_rolling(request_raw_query):
     return jsonify({"enable": False, "request_raw_query": request_raw_query, "strategy": None}), 401
 
 
-@application.route("/lifecycle/rolling/<string:request_raw_query>", methods=["POST"])
+@app.route("/lifecycle/rolling/<string:request_raw_query>", methods=["POST"])
 def change_lifecycle_rolling(request_raw_query):
     """
     Lifecycle Rolling Update
@@ -227,7 +226,7 @@ def change_lifecycle_rolling(request_raw_query):
     return op(caller=request.url_rule)
 
 
-@application.route("/lifecycle/rolling/<string:request_raw_query>", methods=["DELETE"])
+@app.route("/lifecycle/rolling/<string:request_raw_query>", methods=["DELETE"])
 def lifecycle_rolling_delete(request_raw_query):
     """
     Lifecycle Rolling Update
@@ -259,7 +258,7 @@ def lifecycle_rolling_delete(request_raw_query):
     return op(caller=request.url_rule)
 
 
-@application.route("/lifecycle/rolling", methods=["GET"])
+@app.route("/lifecycle/rolling", methods=["GET"])
 def lifecycle_rolling_all():
     """
     Lifecycle Rolling Update
@@ -280,7 +279,7 @@ def lifecycle_rolling_all():
     return jsonify(rolling_status_list), 200
 
 
-@application.route("/lifecycle/ignition", methods=["GET"])
+@app.route("/lifecycle/ignition", methods=["GET"])
 def lifecycle_get_ignition_status():
     """
     Lifecycle Ignition Update
@@ -301,7 +300,7 @@ def lifecycle_get_ignition_status():
     return jsonify(updated_status_list), 200
 
 
-@application.route("/lifecycle/coreos-install", methods=["GET"])
+@app.route("/lifecycle/coreos-install", methods=["GET"])
 def lifecycle_get_coreos_install_status():
     """
     Lifecycle CoreOS Install
@@ -322,7 +321,7 @@ def lifecycle_get_coreos_install_status():
     return jsonify(install_status_list)
 
 
-@application.route("/lifecycle/coreos-install/<string:status>/<string:request_raw_query>", methods=["POST"])
+@app.route("/lifecycle/coreos-install/<string:status>/<string:request_raw_query>", methods=["POST"])
 def report_lifecycle_coreos_install(status, request_raw_query):
     """
     Lifecycle CoreOS Install
@@ -358,7 +357,7 @@ def report_lifecycle_coreos_install(status, request_raw_query):
     return jsonify({"success": success, "request_raw_query": request_raw_query}), 200
 
 
-@application.route('/', methods=['GET'])
+@app.route('/', methods=['GET'])
 def api_mapper():
     """
     Map the API
@@ -372,13 +371,13 @@ def api_mapper():
         schema:
             type: list
     """
-    rules = [k.rule for k in application.url_map.iter_rules()]
+    rules = [k.rule for k in app.url_map.iter_rules()]
     rules = list(set(rules))
     rules.sort()
     return jsonify(rules)
 
 
-@application.route('/healthz', methods=['GET'])
+@app.route('/healthz', methods=['GET'])
 def healthz():
     """
     Health
@@ -392,7 +391,7 @@ def healthz():
         schema:
             type: dict
     """
-    data = ops.healthz(application, SMART, request)
+    data = ops.healthz(app, SMART, request)
     res = jsonify(data), 503 if data["global"] is False else 200
     resp = make_response(res)
     resp.headers['Access-Control-Allow-Origin'] = '*'
@@ -400,7 +399,7 @@ def healthz():
     return resp
 
 
-@application.route('/discovery', methods=['POST'])
+@app.route('/discovery', methods=['POST'])
 def record_discovery_data():
     """
     Discovery
@@ -432,7 +431,7 @@ def record_discovery_data():
         return err
 
 
-@application.route('/discovery', methods=['GET'])
+@app.route('/discovery', methods=['GET'])
 def get_discovery_data():
     """
     Discovery
@@ -453,7 +452,7 @@ def get_discovery_data():
     return jsonify(all_data)
 
 
-@application.route('/scheduler', methods=['GET'])
+@app.route('/scheduler', methods=['GET'])
 def scheduler_get():
     """
     Scheduler
@@ -475,7 +474,7 @@ def scheduler_get():
     return jsonify(all_data)
 
 
-@application.route('/scheduler/<string:role>', methods=['GET'])
+@app.route('/scheduler/<string:role>', methods=['GET'])
 def get_schedule_by_role(role):
     """
     Scheduler
@@ -500,7 +499,7 @@ def get_schedule_by_role(role):
     return jsonify(data)
 
 
-@application.route('/scheduler/available', methods=['GET'])
+@app.route('/scheduler/available', methods=['GET'])
 def get_available_machine():
     """
     Scheduler
@@ -518,7 +517,7 @@ def get_available_machine():
     return jsonify(data)
 
 
-@application.route('/scheduler/ip-list/<string:role>', methods=['GET'])
+@app.route('/scheduler/ip-list/<string:role>', methods=['GET'])
 def get_schedule_role_ip_list(role):
     """
     Scheduler
@@ -543,7 +542,7 @@ def get_schedule_role_ip_list(role):
     return jsonify(ip_list_role)
 
 
-@application.route('/scheduler', methods=['POST'])
+@app.route('/scheduler', methods=['POST'])
 def scheduler_post():
     """
     Scheduler
@@ -577,7 +576,7 @@ def scheduler_post():
     return jsonify(req)
 
 
-@application.route('/backup/db', methods=['POST'])
+@app.route('/backup/db', methods=['POST'])
 def backup_database():
     """
     Backup
@@ -596,11 +595,11 @@ def backup_database():
             type: dict
     """
     if "sqlite://" in EC.db_uri:
-        return ops.backup_sqlite(cache=CACHE, application=application)
+        return ops.backup_sqlite(cache=CACHE, application=app)
     return jsonify({"NotImplementedError": "%s" % EC.db_uri}), 404
 
 
-@application.route('/backup/export', methods=['GET'])
+@app.route('/backup/export', methods=['GET'])
 def backup_as_export():
     """
     Backup by exporting a playbook of what discovery client and schedulers sent to the API
@@ -622,7 +621,7 @@ def backup_as_export():
     return jsonify(playbook), 200
 
 
-@application.route('/ignition/version', methods=['GET'])
+@app.route('/ignition/version', methods=['GET'])
 def get_ignition_versions():
     """
     Ignition version
@@ -639,7 +638,7 @@ def get_ignition_versions():
     return jsonify(CACHE.get("ignition-version"))
 
 
-@application.route('/ignition/version/<string:filename>', methods=['POST'])
+@app.route('/ignition/version/<string:filename>', methods=['POST'])
 def report_ignition_version(filename):
     """
     Ignition version
@@ -664,8 +663,8 @@ def report_ignition_version(filename):
     return jsonify({"new": new_entry, "total": len(versions)})
 
 
-@application.route('/boot.ipxe', methods=['GET'])
-@application.route('/boot.ipxe.0', methods=['GET'])
+@app.route('/boot.ipxe', methods=['GET'])
+@app.route('/boot.ipxe.0', methods=['GET'])
 def boot_ipxe():
     """
     iPXE
@@ -680,13 +679,13 @@ def boot_ipxe():
     """
     app.logger.info("%s %s" % (request.method, request.url))
     try:
-        flask_uri = application.config["API_URI"]
+        flask_uri = app.config["API_URI"]
         if flask_uri is None:
             raise AttributeError("API_URI is None")
         app.logger.debug("%s" % flask_uri)
 
     except Exception as e:
-        flask_uri = application.config["MATCHBOX_URI"]
+        flask_uri = app.config["MATCHBOX_URI"]
         app.logger.error("<%s %s>" % (e, type(e)))
         app.logger.warning("Fall back to MATCHBOX_URI: %s" % flask_uri)
         if flask_uri is None:
@@ -706,7 +705,7 @@ def boot_ipxe():
     return Response(response, status=200, mimetype="text/plain")
 
 
-@application.route("/sync-notify", methods=["POST"])
+@app.route("/sync-notify", methods=["POST"])
 def sync_notify():
     """
     Sync process notify POST to this route to tell everything is synced for matchbox
@@ -724,7 +723,7 @@ def sync_notify():
     return jsonify({"ts": ts, "ttl": EC.sync_notify_ttl}), 200
 
 
-@application.route("/sync-notify", methods=["GET"])
+@app.route("/sync-notify", methods=["GET"])
 def sync_notify_status():
     """
     Sync process notify POST to this route to tell everything is synced for matchbox
@@ -745,8 +744,8 @@ def sync_notify_status():
     return jsonify({"sync-notify": False}), 503
 
 
-@application.route("/ignition", methods=["GET"])
-@application.route("/ignition-pxe", methods=["GET"])
+@app.route("/ignition", methods=["GET"])
+@app.route("/ignition-pxe", methods=["GET"])
 def ignition():
     """
     Ignition
@@ -779,7 +778,7 @@ def ignition():
     if request.path == "/ignition-pxe":
         app.logger.info("%s %s" % (request.method, request.url))
 
-    matchbox_uri = application.config.get("MATCHBOX_URI")
+    matchbox_uri = app.config.get("MATCHBOX_URI")
     if matchbox_uri:
         try:
             # remove the -pxe from the path because matchbox only serve /ignition
@@ -795,7 +794,7 @@ def ignition():
     return Response("matchbox=%s" % matchbox_uri, status=403, mimetype="text/plain")
 
 
-@application.route("/metadata", methods=["GET"])
+@app.route("/metadata", methods=["GET"])
 def metadata():
     """
     Metadata
@@ -808,7 +807,7 @@ def metadata():
         schema:
             type: string
     """
-    matchbox_uri = application.config.get("MATCHBOX_URI")
+    matchbox_uri = app.config.get("MATCHBOX_URI")
     if matchbox_uri:
         matchbox_resp = requests.get("%s%s" % (matchbox_uri, request.full_path))
         resp = matchbox_resp.content
@@ -818,7 +817,7 @@ def metadata():
     return Response("matchbox=%s" % matchbox_uri, status=403, mimetype="text/plain")
 
 
-@application.route('/install-authorization/<string:request_raw_query>')
+@app.route('/install-authorization/<string:request_raw_query>')
 def require_install_authorization(request_raw_query):
     """
     Install Authorization
@@ -852,8 +851,8 @@ def require_install_authorization(request_raw_query):
     return Response(response="Granted", status=200)
 
 
-@application.route('/assets', defaults={'path': ''})
-@application.route('/assets/<path:path>')
+@app.route('/assets', defaults={'path': ''})
+@app.route('/assets/<path:path>')
 def assets(path):
     """
     Assets server
@@ -870,7 +869,7 @@ def assets(path):
             type: string
     """
     app.logger.info("%s %s" % (request.method, request.url))
-    matchbox_uri = application.config.get("MATCHBOX_URI")
+    matchbox_uri = app.config.get("MATCHBOX_URI")
     if matchbox_uri:
         url = "%s/assets/%s" % (matchbox_uri, path)
         matchbox_resp = requests.get(url)
@@ -881,7 +880,7 @@ def assets(path):
     return Response("matchbox=%s" % matchbox_uri, status=404, mimetype="text/plain")
 
 
-@application.route('/ipxe', methods=['GET'])
+@app.route('/ipxe', methods=['GET'])
 def ipxe():
     """
     iPXE
@@ -918,18 +917,18 @@ def ipxe():
         return "404", 404
 
 
-@application.errorhandler(404)
+@app.errorhandler(404)
 def not_found(error):
     app.logger.warning("404 on %s" % request.path)
     return Response("404", status=404, mimetype="text/plain")
 
 
-@application.route('/ui', methods=['GET'])
+@app.route('/ui', methods=['GET'])
 def user_interface():
     return render_template("index.html")
 
 
-@application.route('/ui/view/machine', methods=['GET'])
+@app.route('/ui/view/machine', methods=['GET'])
 def user_view_machine():
     res = jsonify(repositories.user_interface.get_machines_overview())
     resp = make_response(res)
@@ -938,7 +937,7 @@ def user_view_machine():
     return resp
 
 
-@application.route('/ui/view/states', methods=['GET'])
+@app.route('/ui/view/states', methods=['GET'])
 def user_view_machine_statuses():
     data_since_last_min = request.args.get('data_since_last_min') if request.args.get('data_since_last_min') else 30
     res = jsonify(repositories.machine_state.fetch(finished_in_less_than_min=int(data_since_last_min)))
@@ -946,7 +945,3 @@ def user_view_machine_statuses():
     resp.headers['Access-Control-Allow-Origin'] = '*'
 
     return resp
-
-
-if __name__ == "__main__":
-    application.run(debug=True)

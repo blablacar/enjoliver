@@ -16,7 +16,7 @@ from enjoliver import monitoring
 logger = logging.getLogger(__name__)
 
 
-class SmartDatabaseClient(object):
+class SmartDatabaseClient:
     engines = []
     lazy_engine = None
 

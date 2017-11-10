@@ -21,8 +21,7 @@ from multiprocessing import Process
 
 import requests
 
-from app import configs
-from app import smartdb
+from enjoliver import configs, smartdb
 
 EC = configs.EnjoliverConfig(importer=__file__)
 EC.api_uri = "http://127.0.0.1:5000"

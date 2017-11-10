@@ -7,7 +7,7 @@ import re
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float
 from sqlalchemy import ForeignKey, Index
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, validates, remote, foreign
+from sqlalchemy.orm import relationship, validates, foreign
 
 BASE = declarative_base()
 

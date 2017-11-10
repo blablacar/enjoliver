@@ -21,8 +21,8 @@
 /enjoliver-api/.cache/
 /enjoliver-api/.tox/
 /enjoliver-api/enjoliver/ignition_journal/
+/enjoliver-api/enjoliver/prometheus_multiproc_dir
 /enjoliver-api/enjoliver/werkzeug_cache/
-/enjoliver-api/prometheus_multiproc_dir
 /enjoliver-api/static
 /enjoliver-api/static/node_modules/
 /enjoliver-api/templates
