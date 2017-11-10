@@ -12,11 +12,10 @@ from enjoliver.configs import EnjoliverConfig
 from enjoliver.model import ScheduleRoles
 
 EC = EnjoliverConfig(importer=__file__)
-
 logger = logging.getLogger(__name__)
 
 
-class CommonScheduler(object):
+class CommonScheduler:
     """
     Base class to create profiles with deps
     """
