@@ -20,7 +20,8 @@
 /enjoliver-agent/enjoliver-agent
 /enjoliver-api/.cache/
 /enjoliver-api/.tox/
-/enjoliver-api/ignition_journal/
+/enjoliver-api/enjoliver/ignition_journal/
+/enjoliver-api/enjoliver/werkzeug_cache/
 /enjoliver-api/prometheus_multiproc_dir
 /enjoliver-api/static
 /enjoliver-api/static/node_modules/
@@ -48,7 +49,6 @@
 /enjoliver-api/tests/unit/unittest_resources/test_00
 /enjoliver-api/tests/unit/unittest_resources/test_00.downloaded
 /enjoliver-api/tests/unit/unittest_resources/test_01
-/enjoliver-api/werkzeug_cache/
 /enjoliver/db.sqlite-*.bak
 /enjoliver/enjoliver.render/
 /enjoliver/ignition-journal/

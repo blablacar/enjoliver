@@ -1,13 +1,16 @@
 """
 Configuration loading and storing inside EnjoliverConfig class
 """
-import logging
 import os
-
+import logging
 import yaml
+
+import click
 
 APP_PATH = os.path.dirname(os.path.abspath(__file__))
 PROJECT_PATH = os.path.dirname(APP_PATH)
+
+logger = logging.getLogger(__name__)
 
 
 class EnjoliverConfig:
@@ -28,7 +31,7 @@ class EnjoliverConfig:
         env = "ENJOLIVER_%s" % key.upper()
         try:
             env_var = os.environ[env]
-            print("RECOGNIZED ENV %s=%s" % (env, env_var))
+            logger.info('RECOGNIZED ENV %s=%s', env, env_var)
             self.from_env[key] = env_var
             return env_var
         except KeyError:
@@ -70,17 +73,23 @@ class EnjoliverConfig:
         ])
 
         # Databases
-        self.db_path = self.config_override("db_path", '%s/enjoliver.sqlite' % os.path.dirname(
-            os.path.abspath(__file__)))
+        self.db_path = self.config_override(
+            "db_path",
+            '%s/enjoliver.sqlite' % os.path.dirname(os.path.abspath(__file__))
+        )
         self.db_uri = self.config_override("db_uri", 'sqlite:///%s' % self.db_path)
         self.ignition_journal_dir = self.config_override(
-            "ignition_journal_dir", '%s/ignition_journal' % os.path.dirname(
-                os.path.abspath(
-                    __file__)))
+            "ignition_journal_dir",
+            '%s/ignition_journal' % os.path.dirname(os.path.abspath(__file__))
+        )
         self.werkzeug_fs_cache_dir = self.config_override(
-            "werkzeug_fs_cache_dir", '%s/werkzeug_cache' % os.path.dirname(os.path.abspath(__file__)))
+            "werkzeug_fs_cache_dir",
+            '%s/werkzeug_cache' % os.path.dirname(os.path.abspath(__file__))
+        )
         self.prometheus_multiproc_dir = self.config_override(
-            "prometheus_multiproc_dir", '%s/prometheus_multiproc_dir' % os.path.dirname(os.path.abspath(__file__)))
+            "prometheus_multiproc_dir",
+            '%s/prometheus_multiproc_dir' % os.path.dirname(os.path.abspath(__file__))
+        )
 
         # S3
         self.aws_id = self.config_override("aws_id", os.getenv("AWS_ACCESS_KEY_ID", None))
@@ -92,17 +101,22 @@ class EnjoliverConfig:
 
         # Gen
         self.assets_server_uri = self.config_override("assets_server_uri", None)
-        self.kernel = self.config_override("kernel",
-                                           "/assets/coreos/serve/coreos_production_pxe.vmlinuz")
-        self.initrd = self.config_override("initrd",
-                                           "/assets/coreos/serve/coreos_production_pxe_image.cpio.gz")
+        self.kernel = self.config_override(
+            "kernel",
+            "/assets/coreos/serve/coreos_production_pxe.vmlinuz"
+        )
+        self.initrd = self.config_override(
+            "initrd",
+            "/assets/coreos/serve/coreos_production_pxe_image.cpio.gz"
+        )
 
         # Scheduler
         self.apply_deps_tries = int(self.config_override("apply_deps_tries", 15))
         self.apply_deps_delay = int(self.config_override("apply_deps_delay", 60))
 
         self.etcd_member_kubernetes_control_plane_expected_nb = int(self.config_override(
-            "etcd_member_kubernetes_control_plane_expected_nb", 3))
+            "etcd_member_kubernetes_control_plane_expected_nb", 3)
+        )
 
         # Sync Matchbox
         self.sub_ips = int(self.config_override("sub_ips", 256))
@@ -119,11 +133,15 @@ class EnjoliverConfig:
         self.sync_notify_ttl = int(self.config_override("sync_notify_ttl", 60))
 
         # Application config
-        self.kubernetes_apiserver_insecure_port = int(self.config_override("kubernetes_apiserver_insecure_port", 8080))
-        self.kubernetes_service_cluster_ip_range = self.config_override("kubernetes_service_cluster_ip_range",
-                                                                        "172.30.0.0/24")
+        self.kubernetes_apiserver_insecure_port = int(self.config_override(
+            "kubernetes_apiserver_insecure_port", 8080)
+        )
+        self.kubernetes_service_cluster_ip_range = self.config_override(
+            "kubernetes_service_cluster_ip_range", "172.30.0.0/24"
+        )
         self.kubernetes_apiserver_insecure_bind_address = self.config_override(
-            "kubernetes_apiserver_insecure_bind_address", "127.0.0.1")
+            "kubernetes_apiserver_insecure_bind_address", "127.0.0.1"
+        )
 
         self.kubelet_healthz_port = int(self.config_override("kubelet_healthz_port", 10248))
 
@@ -198,17 +216,16 @@ class EnjoliverConfig:
 
         self.disks_ladder_gb = self.config_override("disks_ladder_gb", {"S": 10, "M": 20, "L": 30})
 
-        if self.logging_level.lower() == "debug":
-            print("configs file: %s for %s" % (yaml_full_path, importer))
+        logger.debug('configs file: %s for %s', yaml_full_path, importer)
 
         self.discovery_fqdn_verify = self.config_override("discovery_fqdn_verify", True)
         self.sync_replace_ip_by_fqdn = self.config_override("sync_replace_ip_by_fqdn", False)
 
+    def items(self):
+        return self.__dict__.items()
+
 
 if __name__ == '__main__':
     EC = EnjoliverConfig("%s/configs.yaml" % os.path.dirname(__file__))
-    for k, v in EC.__dict__.items():
-        if isinstance(v, str):
-            print("%s: '%s'" % (k, v))
-        else:
-            print("%s: %s" % (k, v))
+    for k, v in EC.items():
+        click.echo('{}: {}'.format(k, v))
