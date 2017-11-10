@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-from glob import glob
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, findall
 
 setup(
     maintainer='BlaBlaCar',
@@ -12,8 +11,8 @@ setup(
         'enjoliver': ['configs.yaml']
     },
     data_files=[
-        ('static', glob('static/**/*', recursive=True)),
-        ('templates', glob('templates/**/*', recursive=True))
+        ('static', findall('static')),
+        ('templates', findall('templates')),
     ],
     scripts=[],
     zip_safe=False,
