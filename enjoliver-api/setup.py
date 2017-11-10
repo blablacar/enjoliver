@@ -12,8 +12,8 @@ setup(
         'enjoliver': ['configs.yaml']
     },
     data_files=[
-        ('static', glob('static')),
-        ('templates', glob('templates'))
+        ('static', glob('static/**/*', recursive=True)),
+        ('templates', glob('templates/**/*', recursive=True))
     ],
     scripts=[],
     zip_safe=False,
