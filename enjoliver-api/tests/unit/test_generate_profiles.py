@@ -1,10 +1,17 @@
 import os
+from shutil import rmtree
+from tempfile import mkdtemp
 from unittest import TestCase
 
 from enjoliver import generator
 
 
-class IOErrorToWarning(object):
+# TODO: kill this
+class IOErrorToWarning:
+    """
+    A context manager to temporarily modify a private class attribute:
+    generator.GenerateCommin._raise_enof
+    """
     def __enter__(self):
         generator.GenerateCommon._raise_enof = Warning
 
@@ -12,16 +19,31 @@ class IOErrorToWarning(object):
         generator.GenerateCommon._raise_enof = IOError
 
 
+def touch(path):
+    """
+    create an empty file, or append
+    :param path: the path of the file to create.
+    """
+    with open(path, 'a') as f:
+        f.close()
+
+
 class TestGenerateProfiles(TestCase):
-    gen = generator.GenerateProfile
-    unit_path = "%s" % os.path.dirname(__file__)
-    tests_path = "%s" % os.path.split(unit_path)[0]
-    test_matchbox_path = "%s/test_matchbox" % tests_path
-    api_uri = "http://127.0.0.1:5000"
+    tests_path = None
 
     @classmethod
     def setUpClass(cls):
-        generator.GenerateCommon._raise_enof = Warning  # Skip the ignition isfile
+        cls.tests_path = mkdtemp(dir='/tmp')
+        cls.test_matchbox_path = os.path.join(cls.tests_path, 'test_matchbox')
+
+        os.mkdir(cls.test_matchbox_path)
+        os.mkdir(os.path.join(cls.test_matchbox_path, 'ignition'))
+        os.mkdir(os.path.join(cls.test_matchbox_path, 'profiles'))
+
+        touch(os.path.join(cls.test_matchbox_path, 'ignition', 'etcd-test.yaml'))
+        touch(os.path.join(cls.test_matchbox_path, 'ignition', 'etcd-proxy.yaml'))
+
+        cls.api_uri = "http://127.0.0.1:5000"
         with IOErrorToWarning():
             cls.gen = generator.GenerateProfile(
                 api_uri=cls.api_uri,
@@ -30,8 +52,11 @@ class TestGenerateProfiles(TestCase):
                 ignition_id="etcd-proxy.yaml",
                 matchbox_path=cls.test_matchbox_path
             )
-        generator.GenerateCommon._raise_enof = IOError
         cls.gen.profiles_path = "%s/test_resources" % cls.tests_path
+
+    @classmethod
+    def tearDownClass(cls):
+        rmtree(cls.tests_path)
 
     def test_01_boot(self):
         expect = {
