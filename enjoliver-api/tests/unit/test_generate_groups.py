@@ -1,18 +1,38 @@
 import os
+from shutil import rmtree
+from tempfile import mkdtemp
 from unittest import TestCase
 
 from enjoliver import generator
 
 
-class TestGenerateGroups(TestCase):
-    gen = generator.GenerateGroup
-    unit_path = "%s" % os.path.dirname(__file__)
-    tests_path = "%s" % os.path.split(unit_path)[0]
-    test_matchbox_path = "%s/test_matchbox" % tests_path
-    api_uri = "http://127.0.0.1:5000"
+class GenerateGroupTestCase(TestCase):
+    api_uri = None
+    test_matchbox_path = None
+    test_resources_path = None
+    tests_path = None
 
     @classmethod
     def setUpClass(cls):
+        cls.tests_path = mkdtemp(dir='/tmp')
+        cls.test_matchbox_path = os.path.join(cls.tests_path, 'test_matchbox')
+        cls.test_resources_path = os.path.join(cls.tests_path, 'test_resources')
+
+        os.mkdir(cls.test_matchbox_path)
+        os.mkdir(cls.test_resources_path)
+        os.mkdir(os.path.join(cls.test_matchbox_path, 'groups'))
+
+        cls.api_uri = "http://127.0.0.1:5000"
+
+    @classmethod
+    def tearDownClass(cls):
+        rmtree(cls.tests_path)
+
+
+class TestGenerateGroups(GenerateGroupTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
         cls.gen = generator.GenerateGroup(
             api_uri=cls.api_uri,
             _id="etcd-proxy",
@@ -20,7 +40,34 @@ class TestGenerateGroups(TestCase):
             profile="TestGenerateProfiles",
             matchbox_path=cls.test_matchbox_path
         )
-        cls.gen.profiles_path = "%s/test_resources" % cls.tests_path
+        cls.gen.profiles_path = cls.test_resources_path
+
+    def test_instantiate_generate_group_with_incorrect_parameters(self):
+        with self.assertRaises(TypeError):
+            generator.GenerateGroup()
+
+    def test_instantiate_generate_group_with_non_existing_matchbox_path(self):
+        with self.assertRaises(OSError):
+            generator.GenerateGroup(
+                api_uri='foobar',
+                _id='foo',
+                name='foo-bar',
+                profile='foo-bar-baz',
+                matchbox_path='/foo/bar'
+            )
+
+    def test_instantiate_generate_group(self):
+        sandbox = mkdtemp(dir='/tmp')
+        os.mkdir(os.path.join(sandbox, 'groups'))
+
+        generator.GenerateGroup(
+            api_uri='foobar',
+            _id='foo',
+            name='foo-bar',
+            profile='foo-bar-baz',
+            matchbox_path=sandbox
+        )
+        rmtree(sandbox)
 
     def test_00_uri(self):
         ip = self.gen.api_uri
@@ -85,15 +132,10 @@ class TestGenerateGroups(TestCase):
         os.remove("%s/groups/%s.json" % (self.test_matchbox_path, _id))
 
 
-class TestGenerateGroupsSelectorLower(TestCase):
-    gen = generator.GenerateGroup
-    unit_path = "%s" % os.path.dirname(__file__)
-    tests_path = "%s" % os.path.split(unit_path)[0]
-    test_matchbox_path = "%s/test_matchbox" % tests_path
-    api_uri = "http://127.0.0.1:5000"
-
+class TestGenerateGroupsSelectorLower(GenerateGroupTestCase):
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         os.environ["MATCHBOX_URI"] = "http://127.0.0.1:8080"
         os.environ["API_URI"] = "http://127.0.0.1:5000"
         cls.gen = generator.GenerateGroup(
@@ -104,10 +146,6 @@ class TestGenerateGroupsSelectorLower(TestCase):
             selector={"mac": "08:00:27:37:28:2e"},
             matchbox_path=cls.test_matchbox_path
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
 
     def test_00_api_uri(self):
         ip = self.gen.api_uri
@@ -161,15 +199,10 @@ class TestGenerateGroupsSelectorLower(TestCase):
         os.remove("%s/groups/%s.json" % (self.test_matchbox_path, _id))
 
 
-class TestGenerateGroupsSelectorUpper(TestCase):
-    gen = generator.GenerateGroup
-    unit_path = "%s" % os.path.dirname(__file__)
-    tests_path = "%s" % os.path.split(unit_path)[0]
-    test_matchbox_path = "%s/test_matchbox" % tests_path
-    api_uri = "http://127.0.0.1:5000"
-
+class TestGenerateGroupsSelectorUpper(GenerateGroupTestCase):
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         os.environ["MATCHBOX_URI"] = "http://127.0.0.1:8080"
         os.environ["API_URI"] = "http://127.0.0.1:5000"
         cls.gen = generator.GenerateGroup(
@@ -235,15 +268,10 @@ class TestGenerateGroupsSelectorUpper(TestCase):
         os.remove("%s/groups/%s.json" % (self.test_matchbox_path, _id))
 
 
-class TestGenerateGroupsExtraMetadata(TestCase):
-    gen = generator.GenerateGroup
-    unit_path = "%s" % os.path.dirname(__file__)
-    tests_path = "%s" % os.path.split(unit_path)[0]
-    test_matchbox_path = "%s/test_matchbox" % tests_path
-    api_uri = "http://127.0.0.1:5000"
-
+class TestGenerateGroupsExtraMetadata(GenerateGroupTestCase):
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         os.environ["MATCHBOX_URI"] = "http://127.0.0.1:8080"
         os.environ["API_URI"] = "http://127.0.0.1:5000"
         cls.gen = generator.GenerateGroup(
