@@ -66,7 +66,7 @@ class TestConfigSyncSchedules(TestCase):
             ignition_dict={},
             extra_selector_dict=None,
         )
-        d = s.cni_ipam("172.20.0.10/19", "172.20.0.1")
+        d = s._cni_ipam("172.20.0.10/19", "172.20.0.1")
         self.assertEqual(json.dumps({
             "dataDir": "/var/lib/cni/networks",
             'gateway': '172.20.0.1',
@@ -93,7 +93,7 @@ class TestConfigSyncSchedules(TestCase):
         sync.ConfigSyncSchedules.skip_ips = 1
         sync.ConfigSyncSchedules.sub_ips = 0
 
-        d = s.cni_ipam("10.99.33.1/19", "10.99.64.254")
+        d = s._cni_ipam("10.99.33.1/19", "10.99.64.254")
         self.assertEqual(json.dumps({
             "dataDir": "/var/lib/cni/networks",
             "type": "host-local",
@@ -118,7 +118,7 @@ class TestConfigSyncSchedules(TestCase):
         sync.ConfigSyncSchedules.skip_ips = 1
         sync.ConfigSyncSchedules.sub_ips = 0
 
-        d = s.cni_ipam("10.99.39.129/19", "10.99.64.254")
+        d = s._cni_ipam("10.99.39.129/19", "10.99.64.254")
         self.assertEqual(json.dumps({
             "dataDir": "/var/lib/cni/networks",
             "type": "host-local",
