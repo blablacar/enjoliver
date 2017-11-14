@@ -6,7 +6,7 @@ import logging
 import os
 import re
 import time
-from ipaddress import IPv4Network
+from ipaddress import IPv4Interface
 
 import requests
 from werkzeug.contrib.cache import SimpleCache, NullCache
@@ -91,36 +91,42 @@ class ConfigSyncSchedules(object):
             logger.error("error during the split rack/pos %s" % s[0])
         return d
 
-    # TODO: move the range* to an array of 'ranges'.
     @staticmethod
     def _cni_ipam(host_cidrv4: str, host_gateway: str):
         """
         see: https://github.com/containernetworking/cni/blob/master/SPEC.md#ip-allocation
         see: https://github.com/containernetworking/plugins/tree/master/plugins/ipam/host-local
         With the class variables provide a way to generate a static host-local ipam
-        :param host_cidrv4:
-        :param host_gateway:
+        :param host_cidrv4: an host IP with its CIDR prefixlen, eg: '10.0.0.42/8'
+        :param host_gateway: an host IP for the gateway, eg: '10.0.0.1'
         :return: dict
         """
+        interface = IPv4Interface(host_cidrv4)
+        subnet = interface.network
 
-        # host = IPv4Network(host_cidrv4)
-        host = IPv4Network(host_cidrv4, strict=False)
-        subnet = host
-        if ConfigSyncSchedules.sub_ips:
-            ip_cut = int(host.ip.__str__().split(".")[-1])
-            sub = IPv4Network(host.network).ip + (ip_cut * ConfigSyncSchedules.sub_ips)
-            host = IPv4Network(sub)
+        try:
+            assert 0 <= ConfigSyncSchedules.sub_ips <= 256
+            assert (lambda x: x & (x-1) == 0)(ConfigSyncSchedules.sub_ips)
+        except AssertionError:
+            raise ValueError('sub_ips must be a power of two, in [0, 256] interval')
 
-        range_start = host.ip + ConfigSyncSchedules.skip_ips
+        if ConfigSyncSchedules.sub_ips > 0:
+            ip_last_decimal_field = int(str(interface.ip).split('.')[-1])
+            interface = IPv4Interface(
+                interface.network.network_address +
+                ip_last_decimal_field * ConfigSyncSchedules.sub_ips
+            )
+
+        range_start = interface.ip + ConfigSyncSchedules.skip_ips
         range_end = range_start + ConfigSyncSchedules.range_nb_ips
         ipam = {
             "type": "host-local",
-            "subnet": str(subnet),
+            "subnet": "%s" % (str(subnet)),
             "rangeStart": str(range_start),
             "rangeEnd": str(range_end),
             "gateway": host_gateway,
             "routes": [
-                {"dst": "%s/32" % EC.perennial_local_host_ip, "gw": IPv4Network(host_cidrv4).ip.__str__()},
+                {"dst": "%s/32" % EC.perennial_local_host_ip, "gw": str(IPv4Interface(host_cidrv4).ip)},
                 {"dst": "0.0.0.0/0"},
             ],
             "dataDir": "/var/lib/cni/networks"
