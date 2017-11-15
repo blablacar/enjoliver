@@ -20,18 +20,19 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            pip install tox
-      - save_cache:
-          paths:
-            - enjoliver-api/.tox/py36
-          key: v1-dependencies-{{ checksum "enjoliver-api/tox.ini" }}
-        
+            sudo pip install tox
+       
       # run tests!
       - run:
           name: run tests
           command: |
             cd enjoliver-api && tox
 
+      - save_cache:
+          paths:
+            - enjoliver-api/.tox/py36
+          key: v1-dependencies-{{ checksum "enjoliver-api/tox.ini" }}
+ 
       - store_artifacts:
           path: test-reports
           destination: test-reports
