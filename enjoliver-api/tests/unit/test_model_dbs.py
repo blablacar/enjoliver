@@ -1,31 +1,37 @@
 import datetime
-import os
 import time
 import unittest
 
-from enjoliver import smartdb, crud, model, ops
-from enjoliver.repositories.register import RepositoriesRegister
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from enjoliver import crud, ops
+from enjoliver.db import session_commit
+from enjoliver.model import Base, ScheduleRoles
+from enjoliver.repositories.registry import RepositoryRegistry
 
 from tests.fixtures import posts
 
 
-class AbstractModelTestCase:
-    """
-    Abstract test definitions, concrete implementations must inherit from both this
-    and unittest.TestCase, eg:
+class ModelTestCase(unittest.TestCase):
+    engine = None
 
-    class ConcreteTestCase(AbstractModelTestCase, unittest.TestCase)
+    @classmethod
+    def init_db(cls):
+        if cls.engine is None:
+            raise Exception('engine is None')
 
-    """
+        Base.metadata.drop_all(bind=cls.engine)
+        Base.metadata.create_all(bind=cls.engine)
+
     @classmethod
     def setUpClass(cls):
-        raise NotImplementedError
-
-    @staticmethod
-    def set_up_class_checks(smart):
-        model.BASE.metadata.drop_all(smart.get_engine_connection())
-        model.BASE.metadata.create_all(smart.get_engine_connection())
-        with smart.new_session() as session:
+        db_uri = 'postgresql+psycopg2://localhost/enjoliver_testing'
+        cls.engine = create_engine(db_uri)
+        cls.sess_maker = sessionmaker(bind=cls.engine)
+        cls.repositories = RepositoryRegistry(sess_maker=cls.sess_maker)
+        cls.init_db()
+        with session_commit(sess_maker=cls.sess_maker) as session:
             ops.health_check(session, time.time(), "unittest")
 
     def test_00(self):
@@ -236,15 +242,15 @@ class AbstractModelTestCase:
                              self.repositories.machine_schedule.get_roles_by_mac_selector(i["mac"]))
 
             r = self.repositories.machine_schedule.get_machines_by_roles(
-                model.ScheduleRoles.etcd_member)
+                ScheduleRoles.etcd_member)
             self.assertEqual(4, len(r))
 
             r = self.repositories.machine_schedule.get_machines_by_roles(
-                model.ScheduleRoles.kubernetes_control_plane)
+                ScheduleRoles.kubernetes_control_plane)
             self.assertEqual(1, len(r))
 
             r = self.repositories.machine_schedule.get_machines_by_roles(
-                model.ScheduleRoles.etcd_member, model.ScheduleRoles.kubernetes_control_plane)
+                ScheduleRoles.etcd_member, ScheduleRoles.kubernetes_control_plane)
             self.assertEqual(1, len(r))
 
     def test_23a(self):
@@ -300,131 +306,120 @@ class AbstractModelTestCase:
                          self.repositories.machine_schedule.get_roles_by_mac_selector(mac))
 
         r = self.repositories.machine_schedule.get_machines_by_roles(
-            model.ScheduleRoles.etcd_member, model.ScheduleRoles.kubernetes_control_plane)
+            ScheduleRoles.etcd_member, ScheduleRoles.kubernetes_control_plane)
         self.assertEqual(2, len(r))
 
     def test_28(self):
         self.assertEqual(15, len(self.repositories.machine_schedule.get_available_machines()))
 
     def test_30(self):
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             rq = "uuid=%s&mac=%s&os=installed" % (posts.M01["boot-info"]["uuid"], posts.M01["boot-info"]["mac"])
             i = crud.InjectLifecycle(session, request_raw_query=rq)
             self.assertEqual(i.mac, posts.M01["boot-info"]["mac"])
 
     def test_31(self):
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             rq = "os=installed"
             with self.assertRaises(AttributeError):
                 crud.InjectLifecycle(session, request_raw_query=rq)
 
     def test_32(self):
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             rq = "uuid=%s&mac=%s&os=installed" % (posts.M01["boot-info"]["uuid"], posts.M01["boot-info"]["mac"])
             i = crud.InjectLifecycle(session, request_raw_query=rq)
             i.refresh_lifecycle_ignition(True)
 
     def test_33(self):
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             rq = "uuid=%s&mac=%s&os=installed" % (posts.M02["boot-info"]["uuid"], posts.M02["boot-info"]["mac"])
             i = crud.InjectLifecycle(session, request_raw_query=rq)
             i.refresh_lifecycle_ignition(True)
             j = crud.InjectLifecycle(session, request_raw_query=rq)
             j.refresh_lifecycle_ignition(True)
-        with self.smart.new_session() as session:
-            f = crud.FetchLifecycle(session)
-            self.assertTrue(f.get_ignition_uptodate_status(posts.M02["boot-info"]["mac"]))
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        self.assertTrue(f.get_ignition_uptodate_status(posts.M02["boot-info"]["mac"]))
 
     def test_34(self):
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             rq = "uuid=%s&mac=%s&os=installed" % (posts.M03["boot-info"]["uuid"], posts.M03["boot-info"]["mac"])
             i = crud.InjectLifecycle(session, request_raw_query=rq)
             i.refresh_lifecycle_ignition(True)
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             j = crud.InjectLifecycle(session, request_raw_query=rq)
             j.refresh_lifecycle_ignition(False)
-        with self.smart.new_session() as session:
-            f = crud.FetchLifecycle(session)
-            self.assertFalse(f.get_ignition_uptodate_status(posts.M03["boot-info"]["mac"]))
-            self.assertEqual(3, len(f.get_all_updated_status()))
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        self.assertFalse(f.get_ignition_uptodate_status(posts.M03["boot-info"]["mac"]))
+        self.assertEqual(3, len(f.get_all_updated_status()))
 
     def test_35(self):
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             rq = "uuid=%s&mac=%s&os=installed" % (posts.M03["boot-info"]["uuid"], posts.M03["boot-info"]["mac"])
             i = crud.InjectLifecycle(session, request_raw_query=rq)
             i.refresh_lifecycle_coreos_install(True)
-        with self.smart.new_session() as session:
-            f = crud.FetchLifecycle(session)
-            self.assertTrue(f.get_coreos_install_status(posts.M03["boot-info"]["mac"]))
-            self.assertEqual(1, len(f.get_all_coreos_install_status()))
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        self.assertTrue(f.get_coreos_install_status(posts.M03["boot-info"]["mac"]))
+        self.assertEqual(1, len(f.get_all_coreos_install_status()))
 
     def test_36(self):
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             rq = "uuid=%s&mac=%s&os=installed" % (posts.M03["boot-info"]["uuid"], posts.M03["boot-info"]["mac"])
             i = crud.InjectLifecycle(session, request_raw_query=rq)
             i.apply_lifecycle_rolling(True)
 
-        with self.smart.new_session() as session:
-            f = crud.FetchLifecycle(session)
-            status = f.get_rolling_status(posts.M03["boot-info"]["mac"])
-            self.assertTrue(status[0])
-            self.assertEqual("kexec", status[1])
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        status = f.get_rolling_status(posts.M03["boot-info"]["mac"])
+        self.assertTrue(status[0])
+        self.assertEqual("kexec", status[1])
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             n = crud.InjectLifecycle(session, rq)
             n.apply_lifecycle_rolling(False)
 
-        with self.smart.new_session() as session:
-            f = crud.FetchLifecycle(session)
-            r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
-            self.assertFalse(r[0])
-            self.assertEqual("kexec", r[1])
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
+        self.assertFalse(r[0])
+        self.assertEqual("kexec", r[1])
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             n = crud.InjectLifecycle(session, rq)
             n.apply_lifecycle_rolling(True, "reboot")
 
-        with self.smart.new_session() as session:
-            f = crud.FetchLifecycle(session)
-            r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
-            self.assertTrue(r[0])
-            self.assertEqual("reboot", r[1])
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
+        self.assertTrue(r[0])
+        self.assertEqual("reboot", r[1])
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             n = crud.InjectLifecycle(session, rq)
             n.apply_lifecycle_rolling(True, "poweroff")
 
-        with self.smart.new_session() as session:
-            f = crud.FetchLifecycle(session)
-            r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
-            self.assertTrue(r[0])
-            self.assertEqual("poweroff", r[1])
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
+        self.assertTrue(r[0])
+        self.assertEqual("poweroff", r[1])
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             n = crud.InjectLifecycle(session, rq)
             with self.assertRaises(LookupError):
                 n.apply_lifecycle_rolling(True, "notpossible")
 
-        with self.smart.new_session() as session:
-            f = crud.FetchLifecycle(session)
-            r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
-            self.assertTrue(r[0])
-            self.assertEqual("poweroff", r[1])
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
+        self.assertTrue(r[0])
+        self.assertEqual("poweroff", r[1])
 
     def test_37(self):
-        with self.smart.new_session() as session:
-            f = crud.FetchLifecycle(session)
-            t = f.get_rolling_status(posts.M04["boot-info"]["mac"])
-            self.assertIsNone(t[0])
-            self.assertIsNone(t[1])
-            r = f.get_all_rolling_status()
-            self.assertEqual(1, len(r))
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        t = f.get_rolling_status(posts.M04["boot-info"]["mac"])
+        self.assertIsNone(t[0])
+        self.assertIsNone(t[1])
+        r = f.get_all_rolling_status()
+        self.assertEqual(1, len(r))
 
     def test_39(self):
-        with self.smart.new_session() as session:
-            export = crud.BackupExport(session)
-            playbook = export.get_playbook()
-            self.assertEqual(10, len(playbook))
+        playbook = crud.BackupExport(sess_maker=self.sess_maker).get_playbook()
+        self.assertEqual(10, len(playbook))
         for i, entry in enumerate(playbook):
             if i % 2 == 0:
                 lastest = entry["data"]["boot-info"]["mac"]
@@ -433,36 +428,5 @@ class AbstractModelTestCase:
 
     def test_99_healthz(self):
         for i in range(10):
-            with self.smart.new_session() as session:
+            with session_commit(sess_maker=self.sess_maker) as session:
                 ops.health_check(session, time.time(), "unittest")
-
-        with self.smart.new_session() as session:
-            ops.health_check_purge(session)
-
-        with self.smart.new_session() as session:
-            ops.health_check_purge(session)
-
-
-class SqliteModelTestCase(AbstractModelTestCase, unittest.TestCase):
-    unit_path = os.path.dirname(os.path.abspath(__file__))
-    dbs_path = "%s/dbs" % unit_path
-
-    @classmethod
-    def setUpClass(cls):
-        db_uri = 'sqlite:///:memory:'
-
-        cls.smart = smartdb.SmartDatabaseClient(db_uri)
-        cls.repositories = RepositoriesRegister(cls.smart)
-        cls.set_up_class_checks(cls.smart)
-
-
-class PostgresModelTestCase(AbstractModelTestCase, unittest.TestCase):
-    unit_path = os.path.dirname(os.path.abspath(__file__))
-    dbs_path = "%s/dbs" % unit_path
-
-    @classmethod
-    def setUpClass(cls):
-        db_uri = "postgresql://postgres@localhost:5432"
-        cls.smart = smartdb.SmartDatabaseClient(db_uri)
-        cls.repositories = RepositoriesRegister(cls.smart)
-        cls.set_up_class_checks(cls.smart)

@@ -71,10 +71,6 @@ class TestAPIGunicornScheduler(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         time.sleep(0.1)
-        try:
-            os.remove(EC.db_path)
-        except OSError:
-            pass
 
         shutil.rmtree(EC.ignition_journal_dir, ignore_errors=True)
 

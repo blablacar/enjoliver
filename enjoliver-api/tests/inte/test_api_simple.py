@@ -47,10 +47,6 @@ class TestAPI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         time.sleep(0.1)
-        try:
-            os.remove(ec.db_path)
-        except OSError:
-            pass
         smart = api.SmartDatabaseClient(ec.db_uri)
         smart.create_base()
         api.SMART = smart

@@ -3,15 +3,10 @@ import argparse
 import multiprocessing
 import os
 import signal
-import time
+from sqlalchemy import create_engine
 
-
-from enjoliver import (
-    configs,
-    smartdb,
-    ops,
-    gunicorn_conf
-)
+from enjoliver import configs, gunicorn_conf
+from enjoliver.model import Base
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 APP_PATH = os.path.join(PROJECT_PATH, "enjoliver-api")
@@ -19,29 +14,8 @@ APP_PATH = os.path.join(PROJECT_PATH, "enjoliver-api")
 
 def init_db(ec):
     print("initializing db")
-    if "sqlite://" in ec.db_uri:
-        directory = os.path.dirname(ec.db_path)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
-    smart = smartdb.SmartDatabaseClient(ec.db_uri)
-    tries = 60
-    for i in range(tries):
-        try:
-            smart.create_base()
-
-            @smartdb.cockroach_transaction
-            def op(caller=init_db.__name__):
-                with smart.new_session() as session:
-                    ops.health_check_purge(session)
-
-            op(caller=init_db.__name__)
-            return
-        except ConnectionError as e:
-            print("%d/%d %s" % (i + 1, tries, e))
-            time.sleep(1)
-
-    raise ConnectionError(ec.db_uri)
+    engine = create_engine(ec.db_uri)
+    Base.metadata.create_all(bind=engine)
 
 
 def init_journal_dir(ec):
@@ -54,7 +28,7 @@ def gunicorn(ec):
         "gunicorn",
         "--chdir",
         APP_PATH,
-        "enjoliver.api:app",
+        "enjoliver.api:gunicorn()",
         "--worker-class",
         ec.gunicorn_worker_type,
         "-b",

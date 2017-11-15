@@ -1,27 +1,22 @@
 import datetime
 import logging
 
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, sessionmaker
 
-from enjoliver import smartdb
+from enjoliver.db import session_commit
 from enjoliver.model import MachineCurrentState, MachineInterface
 
 logger = logging.getLogger(__file__)
 
 
 class MachineStateRepository:
-    def __init__(self, smart: smartdb.SmartDatabaseClient):
-        self.smart = smart
+    def __init__(self, sess_maker: sessionmaker):
+        self.__sess_maker = sess_maker
 
     def _update_state(self, machine_current_state: MachineCurrentState):
-        @smartdb.cockroach_transaction
-        def callback(caller=self._update_state.__name__):
-            with self.smart.new_session() as session:
-                session.add(machine_current_state)
-                session.commit()
-
         try:
-            callback(self._update_state.__name__)
+            with session_commit(sess_maker=self.__sess_maker) as session:
+                session.add(machine_current_state)
         except Exception as e:
             # updating state is not critical so we accept to wide catch all exception and pass over it just with a log
             logger.error("fail to update machine with mac: %s with state %s: %s" % (
@@ -30,7 +25,7 @@ class MachineStateRepository:
     def fetch(self, finished_in_less_than_min: int):
         time_limit = datetime.datetime.utcnow() - datetime.timedelta(minutes=finished_in_less_than_min)
         results = []
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.__sess_maker) as session:
             for machine in session.query(MachineCurrentState) \
                     .options(joinedload("interfaces")) \
                     .filter(MachineCurrentState.updated_date > time_limit) \
@@ -44,32 +39,31 @@ class MachineStateRepository:
             return results
 
     def update(self, mac: str, state: str):
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.__sess_maker) as session:
             state_machine = session.query(MachineCurrentState) \
                 .filter(MachineCurrentState.machine_mac == mac) \
-                .first()
+                .one_or_none()
 
             machine_interface = session.query(MachineInterface) \
                 .filter(MachineInterface.mac == mac) \
-                .first()
+                .one_or_none()
 
-        machine_id = None if not machine_interface else machine_interface.id
-        now = datetime.datetime.utcnow()
+            machine_id = None if not machine_interface else machine_interface.id
+            now = datetime.datetime.utcnow()
 
-        if not state_machine:
-            logger.debug(
-                "machine with mac: %s doesn't exist in table %s: creating with state %s" % (
-                    mac, MachineCurrentState.__tablename__, state))
-            self._update_state(
-                MachineCurrentState(
+            if not state_machine:
+                logger.debug(
+                    "machine with mac: %s doesn't exist in table %s: creating with state %s" % (
+                        mac, MachineCurrentState.__tablename__, state))
+                self._update_state(MachineCurrentState(
                     machine_id=machine_id,
                     state_name=state,
                     machine_mac=mac,
                     created_date=now,
-                    updated_date=now, )
-            )
-        else:
-            state_machine.state_name = state
-            state_machine.machine_id = machine_id
-            state_machine.updated_date = now
-            self._update_state(state_machine)
+                    updated_date=now,
+                ))
+            else:
+                state_machine.state_name = state
+                state_machine.machine_id = machine_id
+                state_machine.updated_date = now
+                self._update_state(state_machine)

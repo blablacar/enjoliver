@@ -5,8 +5,9 @@ Over the application Model, queries to the database
 import datetime
 import logging
 
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import sessionmaker, Session, joinedload
 
+from enjoliver.db import session_commit
 from enjoliver import tools
 from enjoliver.model import MachineInterface, Machine, Schedule, ScheduleRoles, LifecycleIgnition, \
     LifecycleCoreosInstall, LifecycleRolling
@@ -90,96 +91,111 @@ class FetchLifecycle:
     Get the data of the Lifecycle state
     """
 
-    def __init__(self, session: Session):
-        self.session = session
+    def __init__(self, sess_maker: sessionmaker):
+        self.sess_maker = sess_maker
 
     def get_ignition_uptodate_status(self, mac: str):
-        for row in self.session.execute("""SELECT li.up_to_date FROM "machine-interface" AS mi
-          JOIN machine AS m ON m.id = mi.machine_id
-          JOIN "lifecycle-ignition" AS li ON li.machine_id = mi.machine_id
-          WHERE mi.mac = :mac""", {"mac": mac}):
-            return row["up_to_date"]
-
-        return None
+        with session_commit(sess_maker=self.sess_maker) as session:
+            lf = session.query(LifecycleIgnition)\
+                .join(Machine)\
+                .join(MachineInterface)\
+                .filter(MachineInterface.mac == mac)\
+                .first()
+            if lf:
+                return lf.up_to_date
+            else:
+                return None
 
     def get_all_updated_status(self):
         status = []
-        for machine in self.session.query(Machine).join(LifecycleIgnition).join(
-                MachineInterface).filter(MachineInterface.as_boot == True):
-            status.append({
-                "up-to-date": machine.lifecycle_ignition[0].up_to_date,
-                "fqdn": machine.interfaces[0].fqdn,
-                "mac": machine.interfaces[0].mac,
-                "cidrv4": machine.interfaces[0].cidrv4,
-                "created_date": machine.created_date,
-                "updated_date": machine.updated_date,
-                "last_change_date": machine.lifecycle_ignition[0].last_change_date,
-            })
+        with session_commit(sess_maker=self.sess_maker) as session:
+            for machine in session.query(Machine)\
+                    .join(LifecycleIgnition)\
+                    .join(MachineInterface)\
+                    .filter(MachineInterface.as_boot == True):
+
+                status.append({
+                    "up-to-date": machine.lifecycle_ignition[0].up_to_date,
+                    "fqdn": machine.interfaces[0].fqdn,
+                    "mac": machine.interfaces[0].mac,
+                    "cidrv4": machine.interfaces[0].cidrv4,
+                    "created_date": machine.created_date,
+                    "updated_date": machine.updated_date,
+                    "last_change_date": machine.lifecycle_ignition[0].last_change_date,
+                })
         return status
 
     def get_coreos_install_status(self, mac: str):
-        for row in self.session.execute("""SELECT lci.success FROM "machine-interface" AS mi
-          JOIN machine AS m ON m.id = mi.machine_id
-          JOIN "lifecycle-coreos-install" AS lci ON lci.machine_id = mi.machine_id
-          WHERE mi.mac = :mac""", {"mac": mac}):
-            return bool(row["success"])
-
-        return None
+        with session_commit(sess_maker=self.sess_maker) as session:
+            lci = session.query(LifecycleCoreosInstall)\
+                .join(Machine)\
+                .join(MachineInterface)\
+                .filter(MachineInterface.mac == mac)\
+                .first()
+            if lci:
+                return lci.success
+            else:
+                return None
 
     def get_all_coreos_install_status(self):
         life_status_list = []
-        for machine in self.session.query(Machine).join(LifecycleCoreosInstall).join(MachineInterface).filter(
-                        MachineInterface.as_boot == True):
-            life_status_list.append({
-                "mac": machine.interfaces[0].mac,
-                "fqdn": machine.interfaces[0].fqdn,
-                "cidrv4": machine.interfaces[0].cidrv4,
-                "success": machine.lifecycle_coreos_install[0].success,
-                "created_date": machine.lifecycle_coreos_install[0].created_date,
-                "updated_date": machine.lifecycle_coreos_install[0].updated_date
-            })
-        return life_status_list
+        with session_commit(sess_maker=self.sess_maker) as session:
+            for machine in session.query(Machine)\
+                    .join(LifecycleCoreosInstall)\
+                    .join(MachineInterface)\
+                    .filter(MachineInterface.as_boot == True):
 
-    def get_rolling_status(self, mac: str):
-        for m in self.session.query(Machine) \
-                .join(MachineInterface) \
-                .filter(MachineInterface.mac == mac) \
-                .join(LifecycleRolling):
-            try:
-                rolling = m.lifecycle_rolling[0]
-                return rolling.enable, rolling.strategy
-            except IndexError:
-                pass
-
-        logger.debug("mac: %s return None" % mac)
-        return None, None
-
-    def get_all_rolling_status(self):
-        life_roll_list = []
-        for machine in self.session.query(Machine) \
-                .join(LifecycleRolling) \
-                .join(MachineInterface) \
-                .options(joinedload("interfaces")) \
-                .options(joinedload("lifecycle_rolling")) \
-                .filter(MachineInterface.as_boot == True):
-            try:
-                life_roll_list.append({
+                life_status_list.append({
                     "mac": machine.interfaces[0].mac,
                     "fqdn": machine.interfaces[0].fqdn,
                     "cidrv4": machine.interfaces[0].cidrv4,
-                    "enable": bool(machine.lifecycle_rolling[0].enable),
-                    "created_date": machine.lifecycle_rolling[0].created_date,
-                    "updated_date": machine.lifecycle_rolling[0].updated_date
+                    "success": machine.lifecycle_coreos_install[0].success,
+                    "created_date": machine.lifecycle_coreos_install[0].created_date,
+                    "updated_date": machine.lifecycle_coreos_install[0].updated_date
                 })
-            except IndexError:
-                pass
+        return life_status_list
+
+    def get_rolling_status(self, mac: str):
+        with session_commit(sess_maker=self.sess_maker) as session:
+            for m in session.query(Machine)\
+                    .join(MachineInterface)\
+                    .filter(MachineInterface.mac == mac)\
+                    .join(LifecycleRolling):
+                try:
+                    rolling = m.lifecycle_rolling[0]
+                    return rolling.enable, rolling.strategy
+                except IndexError:
+                    pass
+
+            logger.debug("mac: %s return None" % mac)
+            return None, None
+
+    def get_all_rolling_status(self):
+        life_roll_list = []
+        with session_commit(sess_maker=self.sess_maker) as session:
+            for machine in session.query(Machine) \
+                    .join(LifecycleRolling) \
+                    .join(MachineInterface) \
+                    .options(joinedload("interfaces")) \
+                    .options(joinedload("lifecycle_rolling")) \
+                    .filter(MachineInterface.as_boot == True):
+                try:
+                    life_roll_list.append({
+                        "mac": machine.interfaces[0].mac,
+                        "fqdn": machine.interfaces[0].fqdn,
+                        "cidrv4": machine.interfaces[0].cidrv4,
+                        "enable": bool(machine.lifecycle_rolling[0].enable),
+                        "created_date": machine.lifecycle_rolling[0].created_date,
+                        "updated_date": machine.lifecycle_rolling[0].updated_date
+                    })
+                except IndexError:
+                    pass
         return life_roll_list
 
 
 class BackupExport:
-    def __init__(self, session: Session):
-        self.session = session
-        self.playbook = []
+    def __init__(self, sess_maker: sessionmaker):
+        self.sess_maker = sess_maker
 
     @staticmethod
     def _construct_discovery(machine: Machine):
@@ -248,13 +264,13 @@ class BackupExport:
         Get and reproduce the data sent inside the db from an API level
         :return:
         """
-        # TODO use the ORM loading
-        for schedule_type in [ScheduleRoles.kubernetes_control_plane, ScheduleRoles.kubernetes_node]:
-            for schedule in self.session.query(Schedule).filter(Schedule.role == schedule_type):
-                for machine in self.session.query(Machine).filter(Machine.id == schedule.machine_id):
+        playbook = []
+        with session_commit(sess_maker=self.sess_maker) as session:
+            for schedule_type in [ScheduleRoles.kubernetes_control_plane, ScheduleRoles.kubernetes_node]:
+                for machine in session.query(Machine).filter(Machine.schedules.any(Schedule.role == schedule_type)):
                     discovery_data = self._construct_discovery(machine)
                     schedule_data = self._construct_schedule(discovery_data["boot-info"]["mac"], schedule_type)
-                    self.playbook.append({"data": discovery_data, "route": "/discovery"})
-                    self.playbook.append({"data": schedule_data, "route": "/scheduler"})
+                    playbook.append({"data": discovery_data, "route": "/discovery"})
+                    playbook.append({"data": schedule_data, "route": "/scheduler"})
 
-        return self.playbook
+        return playbook

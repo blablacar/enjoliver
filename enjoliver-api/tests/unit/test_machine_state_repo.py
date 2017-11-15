@@ -1,28 +1,41 @@
 import unittest
 
-from enjoliver import smartdb, model
-from enjoliver.model import MachineCurrentState, MachineInterface, Machine, MachineStates
-from enjoliver.repositories import machine_state_repo
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import sessionmaker
+
+from enjoliver.db import session_commit
+from enjoliver.model import Base, Machine, MachineCurrentState, MachineInterface, MachineStates
+from enjoliver.repositories.machine_state import MachineStateRepository
 
 
 class TestMachineStateRepo(unittest.TestCase):
+    engine = None  # type: Engine
+
+    @classmethod
+    def init_db(cls):
+        if cls.engine is None:
+            raise Exception('engine is None')
+
+        Base.metadata.drop_all(bind=cls.engine)
+        Base.metadata.create_all(bind=cls.engine)
+
     @classmethod
     def setUpClass(cls):
-        db_uri = 'sqlite:///:memory:'
-
-        cls.smart = smartdb.SmartDatabaseClient(db_uri)
+        db_uri = 'postgresql+psycopg2://localhost/enjoliver_testing'
+        cls.engine = create_engine(db_uri)
+        cls.sess_maker = sessionmaker(bind=cls.engine)
 
     def setUp(self):
-        model.BASE.metadata.drop_all(self.smart.get_engine_connection())
-        model.BASE.metadata.create_all(self.smart.get_engine_connection())
+        self.init_db()
 
     def test_no_machine_no_state(self):
         mac = "00:00:00:00:00:00"
         state = MachineStates.booting
-        msr = machine_state_repo.MachineStateRepository(self.smart)
+        msr = MachineStateRepository(sess_maker=self.sess_maker)
         msr.update(mac, state)
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             res = session.query(MachineCurrentState).filter(MachineCurrentState.machine_mac == mac).first()
             self.assertEqual(mac, res.machine_mac)
             self.assertEqual(state, res.state_name)
@@ -32,7 +45,7 @@ class TestMachineStateRepo(unittest.TestCase):
         mac = "00:00:00:00:00:00"
         state = MachineStates.booting
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"
             machine = Machine(uuid=uuid)
             session.add(machine)
@@ -42,10 +55,10 @@ class TestMachineStateRepo(unittest.TestCase):
                                  as_boot=True, gateway="1.1.1.1", name="lol"))
             session.commit()
 
-        msr = machine_state_repo.MachineStateRepository(self.smart)
+        msr = MachineStateRepository(sess_maker=self.sess_maker)
         msr.update(mac, state)
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             res = session.query(MachineCurrentState).filter(MachineCurrentState.machine_mac == mac).first()
             self.assertEqual(mac, res.machine_mac)
             self.assertEqual(state, res.state_name)
@@ -54,9 +67,8 @@ class TestMachineStateRepo(unittest.TestCase):
     def test_machine_exists_state_exists(self):
         mac = "00:00:00:00:00:00"
         state = MachineStates.booting
-        msr = machine_state_repo.MachineStateRepository(self.smart)
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"
             machine = Machine(uuid=uuid)
             session.add(machine)
@@ -66,20 +78,23 @@ class TestMachineStateRepo(unittest.TestCase):
                                  as_boot=True, gateway="1.1.1.1", name="lol"))
             session.commit()
 
+        msr = MachineStateRepository(sess_maker=self.sess_maker)
         msr.update(mac, state)
+
         new_state = MachineStates.discovery
         msr.update(mac, new_state)
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             res = session.query(MachineCurrentState).filter(MachineCurrentState.machine_mac == mac).first()
             self.assertEqual(mac, res.machine_mac)
             self.assertEqual(new_state, res.state_name)
             self.assertEqual(machine_id, res.machine_id)
+            updated_date = res.updated_date
 
         ret = msr.fetch(10)
         self.assertEqual([{
             "fqdn": None,
             "mac": mac,
             "state": new_state,
-            "date": res.updated_date
+            "date": updated_date
         }], ret)
