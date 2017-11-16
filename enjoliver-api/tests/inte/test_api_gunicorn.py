@@ -57,11 +57,6 @@ class TestAPIGunicorn(unittest.TestCase):
     def setUpClass(cls):
         time.sleep(0.2)
         cls.clean_sandbox()
-        try:
-            os.remove(ec.db_path)
-        except OSError:
-            pass
-
         shutil.rmtree(ec.ignition_journal_dir, ignore_errors=True)
 
         cls.p_matchbox = Process(target=TestAPIGunicorn.process_target_matchbox)

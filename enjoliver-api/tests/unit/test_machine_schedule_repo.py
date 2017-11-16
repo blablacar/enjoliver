@@ -1,9 +1,9 @@
 import unittest
 
-from enjoliver import smartdb, model
-from enjoliver.repositories.machine_discovery_repo import DiscoveryRepository
+from enjoliver import model
+from enjoliver.repositories.machine_discovery import MachineDiscoveryRepository
 from enjoliver.model import MachineInterface, Machine, Schedule, ScheduleRoles
-from enjoliver.repositories.machine_schedule_repo import ScheduleRepository
+from enjoliver.repositories.machine_schedule import MachineScheduleRepository
 
 from tests.fixtures import posts
 
@@ -31,7 +31,7 @@ class TestMachineScheduleRepo(unittest.TestCase):
                                  as_boot=True, gateway="1.1.1.1", name="lol"))
             session.commit()
 
-        ms = ScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(self.smart)
         ret = ms.get_available_machines()
         self.assertEqual(1, len(ret))
 
@@ -50,7 +50,7 @@ class TestMachineScheduleRepo(unittest.TestCase):
                 role=ScheduleRoles.kubernetes_node))
             session.commit()
 
-        ms = ScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(self.smart)
         ret = ms.get_available_machines()
         self.assertEqual(0, len(ret))
         ret = ms.get_roles_by_mac_selector(mac)
@@ -82,7 +82,7 @@ class TestMachineScheduleRepo(unittest.TestCase):
                 role=ScheduleRoles.kubernetes_control_plane))
             session.commit()
 
-        ms = ScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(self.smart)
         ret = ms.get_available_machines()
         self.assertEqual(0, len(ret))
 
@@ -116,7 +116,7 @@ class TestMachineScheduleRepo(unittest.TestCase):
                 role=ScheduleRoles.etcd_member))
             session.commit()
 
-        ms = ScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(self.smart)
         ret = ms.get_available_machines()
         self.assertEqual(0, len(ret))
 
@@ -136,61 +136,61 @@ class TestMachineScheduleRepo(unittest.TestCase):
         self.assertEqual(0, len(ret))
 
     def test_one_machine_discovery(self):
-        mds = DiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(self.smart)
         mds.upsert(posts.M01)
-        ms = ScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(self.smart)
         ret = ms.get_available_machines()
         self.assertEqual(1, len(ret))
 
     def test_two_machine_discovery(self):
-        mds = DiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(self.smart)
         mds.upsert(posts.M01)
         mds.upsert(posts.M02)
-        ms = ScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(self.smart)
         ret = ms.get_available_machines()
         self.assertEqual(2, len(ret))
 
     def test_two_machine_discovery_idemp(self):
-        mds = DiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(self.smart)
         mds.upsert(posts.M01)
         mds.upsert(posts.M02)
-        ms = ScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(self.smart)
         ret = ms.get_available_machines()
         self.assertEqual(2, len(ret))
-        ms = ScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(self.smart)
         ret = ms.get_available_machines()
         self.assertEqual(2, len(ret))
 
     def test_machine_without_role(self):
-        mds = DiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(self.smart)
         mds.upsert(posts.M01)
         mds.upsert(posts.M02)
-        ms = ScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(self.smart)
         for role in model.ScheduleRoles.roles:
             ret = ms.get_machines_by_role(role)
             self.assertEqual(0, len(ret))
 
     def test_machine_without_role2(self):
-        mds = DiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(self.smart)
         mds.upsert(posts.M01)
         mds.upsert(posts.M02)
-        ms = ScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(self.smart)
         ret = ms.get_all_schedules()
         self.assertEqual(0, len(ret))
 
     def test_machine_without_role3(self):
-        mds = DiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(self.smart)
         mds.upsert(posts.M01)
         mds.upsert(posts.M02)
-        ms = ScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(self.smart)
         ret = ms.get_roles_by_mac_selector(posts.M01["boot-info"]["mac"])
         self.assertEqual(0, len(ret))
 
     def test_machine_without_role4(self):
-        mds = DiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(self.smart)
         mds.upsert(posts.M01)
         mds.upsert(posts.M02)
-        ms = ScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(self.smart)
         for role in model.ScheduleRoles.roles:
             ret = ms.get_role_ip_list(role)
             self.assertEqual(0, len(ret))
@@ -208,7 +208,7 @@ class TestMachineScheduleRepo(unittest.TestCase):
 
             session.commit()
 
-        ms = ScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(self.smart)
         data = {
             "roles": ["kubernetes-control-plane", "etcd-member"],
             "selector": {

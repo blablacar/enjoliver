@@ -1,21 +1,21 @@
 import datetime
 import logging
 
-from sqlalchemy.orm import joinedload
-from sqlalchemy.orm.session import Session
+from sqlalchemy.orm import joinedload, Session, sessionmaker
 
-from enjoliver import smartdb, tools
+from enjoliver import tools
+from enjoliver.db import session_commit
 from enjoliver.model import MachineInterface, Machine, MachineDisk, Chassis, ChassisPort
-from enjoliver.smartdb import cockroach_transaction
+
 
 logger = logging.getLogger(__file__)
 
 
-class DiscoveryRepository:
-    __name__ = "DiscoveryRepository"
+class MachineDiscoveryRepository:
+    __name__ = "MachineDiscoveryRepository"
 
-    def __init__(self, smart: smartdb.SmartDatabaseClient):
-        self.smart = smart
+    def __init__(self, sess_maker: sessionmaker):
+        self.__sess_maker = sess_maker
 
     @staticmethod
     def _lint_discovery_data(discovery_data: dict):
@@ -36,7 +36,7 @@ class DiscoveryRepository:
         Delete all resources attached to a machine
         As we don't need performance we can avoid heuristics by dropping and re-creating theses needed resources
         The discovery data is the reference of the reality
-        :param session:
+        :param session: a DB session
         :param machine:
         :return:
         """
@@ -100,36 +100,34 @@ class DiscoveryRepository:
                 )
 
     def upsert(self, discovery_data: dict):
-        caller = "%s.%s" % (self.__name__, self.upsert.__name__)
         discovery_data = self._lint_discovery_data(discovery_data)
         now = datetime.datetime.utcnow()
 
-        @cockroach_transaction
-        def callback(caller=caller):
-            new = True
-            with self.smart.new_session() as session:
+        new = True
+        with session_commit(sess_maker=self.__sess_maker) as session:
 
-                machine = session.query(Machine) \
-                    .filter(Machine.uuid == discovery_data["boot-info"]["uuid"]) \
-                    .first()
+            machine = session.query(Machine) \
+                .filter(Machine.uuid == discovery_data["boot-info"]["uuid"]) \
+                .first()
 
-                if machine:
-                    new = False
-                    machine.updated_date = now
-                    self._delete_all_attached(session, machine)
-                else:
-                    machine = Machine(uuid=discovery_data["boot-info"]["uuid"], created_date=now, updated_date=now)
-                    session.add(machine)
-                    session.flush()
+            if machine:
+                new = False
+                machine.updated_date = now
+                self._delete_all_attached(session, machine)
+            else:
+                machine = Machine(
+                    uuid=discovery_data["boot-info"]["uuid"],
+                    created_date=now, updated_date=now
+                )
+                session.add(machine)
+                session.flush()
 
-                for d in discovery_data["disks"]:
-                    session.add(MachineDisk(path=d["path"], size=d["size-bytes"], machine_id=machine.id))
+            for d in discovery_data["disks"]:
+                session.add(MachineDisk(path=d["path"], size=d["size-bytes"], machine_id=machine.id))
 
-                self._insert_network(session, machine, discovery_data)
-                session.commit()
-            return new
-
-        return callback(caller)
+            self._insert_network(session, machine, discovery_data)
+            session.commit()
+        return new
 
     def fetch_all_discovery(self):
         """
@@ -137,7 +135,7 @@ class DiscoveryRepository:
         :return:
         """
         machines = []
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.__sess_maker) as session:
             for m in session.query(Machine) \
                     .options(joinedload("interfaces")) \
                     .options(joinedload("disks")) \

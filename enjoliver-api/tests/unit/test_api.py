@@ -1,41 +1,50 @@
 import json
 import os
 import shutil
-import unittest
-
 import time
+import unittest
+from unittest.mock import Mock
+from werkzeug.contrib.cache import SimpleCache
 
-from enjoliver import api
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 from enjoliver import configs
+from enjoliver.app import create_app
+from enjoliver.model import Base
+from enjoliver.repositories.registry import RepositoryRegistry
+from enjoliver.routes import register_routes
+
 from tests.fixtures import posts
 
 
-ec = configs.EnjoliverConfig(importer=__file__)
-
-
 class TestAPI(unittest.TestCase):
-    unit_path = os.path.dirname(os.path.abspath(__file__))
-    dbs_path = "%s/dbs" % unit_path
+    # unit_path = os.path.dirname(os.path.abspath(__file__))
+    # dbs_path = "%s/dbs" % unit_path
 
     @classmethod
     def setUpClass(cls):
-        try:
-            os.remove(ec.db_path)
-        except OSError:
-            pass
-        api.ignition_journal = "%s/ignition_journal" % cls.unit_path
+        # api.ignition_journal = "%s/ignition_journal" % cls.unit_path
+        #
+        # shutil.rmtree(api.ignition_journal, ignore_errors=True)
+        # api.cache.clear()
 
-        shutil.rmtree(api.ignition_journal, ignore_errors=True)
-        api.CACHE.clear()
+        cls.ec = configs.EnjoliverConfig(importer=__file__)
+        app = create_app('EnjoliverTest', ec=cls.ec)
+        app.testing = True
+        engine = create_engine('postgresql://localhost/enjoliver_testing')
+        sess_maker = sessionmaker(bind=engine)
+        Base.metadata.drop_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
+        registry = RepositoryRegistry(sess_maker=sess_maker)
+        register_routes(app=app, ec=cls.ec, cache=SimpleCache(), sess_maker=sess_maker, registry=registry)
 
-        cls.app = api.app.test_client()
-        smart = api.SmartDatabaseClient(ec.db_uri)
-        api.SMART = smart
-        smart.create_base()
-
-        api.repositories = api.RepositoriesRegister(smart)
-
-        cls.app.testing = True
+        cls.app = app.test_client()
+        # smart = api.SmartDatabaseClient(ec.db_uri)
+        # api.SMART = smart
+        # smart.create_base()
+        #
+        # api.repositories = api.RepositoryRegistry(smart)
 
     def test_healthz_00(self):
         expect = {
@@ -66,7 +75,7 @@ class TestAPI(unittest.TestCase):
                  'mac=${net0/mac:hexhyp}&' \
                  'domain=${domain}&' \
                  'hostname=${hostname}&' \
-                 'serial=${serial}\n' % ec.api_uri
+                 'serial=${serial}\n' % self.ec.api_uri
 
         result = self.app.get('/boot.ipxe')
         self.assertEqual(result.status_code, 200)
@@ -83,7 +92,7 @@ class TestAPI(unittest.TestCase):
                  'mac=${net0/mac:hexhyp}&' \
                  'domain=${domain}&' \
                  'hostname=${hostname}&' \
-                 'serial=${serial}\n' % ec.api_uri
+                 'serial=${serial}\n' % self.ec.api_uri
 
         result = self.app.get('/boot.ipxe.0')
         self.assertEqual(result.status_code, 200)

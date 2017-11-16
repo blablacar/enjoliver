@@ -3,8 +3,8 @@ import os
 import time
 import unittest
 
-from enjoliver import smartdb, crud, model, ops
-from enjoliver.repositories.register import RepositoriesRegister
+from enjoliver import crud, model, ops
+from enjoliver.repositories.registry import RepositoryRegistry
 
 from tests.fixtures import posts
 
@@ -436,12 +436,6 @@ class AbstractModelTestCase:
             with self.smart.new_session() as session:
                 ops.health_check(session, time.time(), "unittest")
 
-        with self.smart.new_session() as session:
-            ops.health_check_purge(session)
-
-        with self.smart.new_session() as session:
-            ops.health_check_purge(session)
-
 
 class SqliteModelTestCase(AbstractModelTestCase, unittest.TestCase):
     unit_path = os.path.dirname(os.path.abspath(__file__))
@@ -452,7 +446,7 @@ class SqliteModelTestCase(AbstractModelTestCase, unittest.TestCase):
         db_uri = 'sqlite:///:memory:'
 
         cls.smart = smartdb.SmartDatabaseClient(db_uri)
-        cls.repositories = RepositoriesRegister(cls.smart)
+        cls.repositories = RepositoryRegistry(cls.smart)
         cls.set_up_class_checks(cls.smart)
 
 
@@ -464,5 +458,5 @@ class PostgresModelTestCase(AbstractModelTestCase, unittest.TestCase):
     def setUpClass(cls):
         db_uri = "postgresql://postgres@localhost:5432"
         cls.smart = smartdb.SmartDatabaseClient(db_uri)
-        cls.repositories = RepositoriesRegister(cls.smart)
+        cls.repositories = RepositoryRegistry(cls.smart)
         cls.set_up_class_checks(cls.smart)

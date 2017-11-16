@@ -1,27 +1,21 @@
 import logging
 
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, sessionmaker
 
-from enjoliver import smartdb
+from enjoliver.db import session_commit
 from enjoliver.model import Machine, Schedule, MachineInterface
 
 logger = logging.getLogger(__file__)
 
 
-class ScheduleRepository:
-    __name__ = "ScheduleRepository"
+class MachineScheduleRepository:
+    __name__ = "MachineScheduleRepository"
 
-    def __init__(self, smart: smartdb.SmartDatabaseClient):
-        self.smart = smart
+    def __init__(self, sess_maker: sessionmaker):
+        self.__sess_maker = sess_maker
 
     @staticmethod
     def _lint_schedule_data(schedule_data: dict):
-        # {
-        #     "roles": ["kubernetes-control-plane", "etcd-member"],
-        #     "selector": {
-        #         "mac": mac
-        #     }
-        # }
         try:
             assert 'selector' in schedule_data
             assert 'mac' in schedule_data['selector']
@@ -34,42 +28,33 @@ class ScheduleRepository:
         return schedule_data
 
     def create_schedule(self, schedule_data: dict):
-        caller = "%s.%s" % (self.__name__, self.create_schedule.__name__)
         schedule_data = self._lint_schedule_data(schedule_data)
 
-        @smartdb.cockroach_transaction
-        def callback(caller=caller):
-            commit = False
-            with self.smart.new_session() as session:
-                machine = session.query(Machine) \
-                    .join(MachineInterface) \
-                    .options(joinedload("schedules")) \
-                    .filter(MachineInterface.mac == schedule_data["selector"]["mac"]) \
-                    .first()
+        with session_commit(sess_maker=self.__sess_maker) as session:
+            machine = session.query(Machine) \
+                .join(MachineInterface) \
+                .options(joinedload("schedules")) \
+                .filter(MachineInterface.mac == schedule_data["selector"]["mac"]) \
+                .first()
 
-                if not machine:
-                    logger.error("machine mac %s not in db", schedule_data["selector"]["mac"])
-                    return commit
-                else:
-                    machine_already_scheduled = [s.role for s in machine.schedules]
-                    for role in schedule_data["roles"]:
-                        if role in machine_already_scheduled:
-                            logger.info("machine mac %s already scheduled with role %s",
-                                        schedule_data["selector"]["mac"], role)
-                            continue
-                        session.add(Schedule(machine_id=machine.id, role=role))
-                        logger.info("scheduling machine mac %s as role %s", schedule_data["selector"]["mac"], role)
-                        commit = True
-
-                    session.commit() if commit else None
-
-            return commit
-
-        return callback(caller)
+            if not machine:
+                logger.error("machine mac %s not in db", schedule_data["selector"]["mac"])
+            else:
+                machine_already_scheduled = [s.role for s in machine.schedules]
+                for role in schedule_data["roles"]:
+                    if role in machine_already_scheduled:
+                        logger.info("machine mac %s already scheduled with role %s",
+                                    schedule_data["selector"]["mac"], role)
+                        continue
+                    session.add(Schedule(machine_id=machine.id, role=role))
+                    logger.info(
+                        "scheduling machine mac %s as role %s",
+                        schedule_data["selector"]["mac"], role
+                    )
 
     def get_all_schedules(self):
         result = dict()
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.__sess_maker) as session:
             for machine in session.query(Machine) \
                     .options(joinedload("interfaces")) \
                     .options(joinedload("schedules")) \
@@ -81,19 +66,17 @@ class ScheduleRepository:
         return result
 
     def get_roles_by_mac_selector(self, mac: str):
-        result = []
-        with self.smart.new_session() as session:
-            for s in session.query(Schedule) \
-                    .join(Machine) \
-                    .join(MachineInterface) \
-                    .filter(MachineInterface.mac == mac):
-                result.append(s.role)
-
-        return result
+        with session_commit(sess_maker=self.__sess_maker) as session:
+            return [
+                s.role for s in session.query(Schedule)
+                .join(Machine)
+                .join(MachineInterface)
+                .filter(MachineInterface.mac == mac)
+            ]
 
     def get_available_machines(self):
         available_machines = []
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.__sess_maker) as session:
             for m in session.query(Machine) \
                     .join(MachineInterface) \
                     .options(joinedload("schedules")) \
@@ -133,7 +116,7 @@ class ScheduleRepository:
 
     def get_machines_by_role(self, role: str):
         machines = []
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.__sess_maker) as session:
             for machine in session.query(Machine) \
                     .options(joinedload("interfaces")) \
                     .options(joinedload("disks")) \
@@ -150,7 +133,7 @@ class ScheduleRepository:
         machines = []
         roles = list(roles)
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.__sess_maker) as session:
             for machine in session.query(Machine) \
                     .options(joinedload("interfaces")) \
                     .options(joinedload("disks")) \
@@ -164,7 +147,7 @@ class ScheduleRepository:
 
     def get_role_ip_list(self, role: str):
         ips = []
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.__sess_maker) as session:
             for machine in session.query(Machine) \
                     .options(joinedload("interfaces")) \
                     .join(MachineInterface) \

@@ -73,11 +73,7 @@ class EnjoliverConfig:
         ])
 
         # Databases
-        self.db_path = self.config_override(
-            "db_path",
-            '%s/enjoliver.sqlite' % os.path.dirname(os.path.abspath(__file__))
-        )
-        self.db_uri = self.config_override("db_uri", 'sqlite:///%s' % self.db_path)
+        self.db_uri = self.config_override("db_uri", 'postgresql://')
         self.ignition_journal_dir = self.config_override(
             "ignition_journal_dir",
             '%s/ignition_journal' % os.path.dirname(os.path.abspath(__file__))

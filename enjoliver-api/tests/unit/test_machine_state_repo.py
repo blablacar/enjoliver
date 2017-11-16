@@ -1,8 +1,8 @@
 import unittest
 
-from enjoliver import smartdb, model
+from enjoliver import model
 from enjoliver.model import MachineCurrentState, MachineInterface, Machine, MachineStates
-from enjoliver.repositories import machine_state_repo
+from enjoliver.repositories import machine_state
 
 
 class TestMachineStateRepo(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestMachineStateRepo(unittest.TestCase):
     def test_no_machine_no_state(self):
         mac = "00:00:00:00:00:00"
         state = MachineStates.booting
-        msr = machine_state_repo.MachineStateRepository(self.smart)
+        msr = machine_state.MachineStateRepository(self.smart)
         msr.update(mac, state)
 
         with self.smart.new_session() as session:
@@ -42,7 +42,7 @@ class TestMachineStateRepo(unittest.TestCase):
                                  as_boot=True, gateway="1.1.1.1", name="lol"))
             session.commit()
 
-        msr = machine_state_repo.MachineStateRepository(self.smart)
+        msr = machine_state.MachineStateRepository(self.smart)
         msr.update(mac, state)
 
         with self.smart.new_session() as session:
@@ -54,7 +54,7 @@ class TestMachineStateRepo(unittest.TestCase):
     def test_machine_exists_state_exists(self):
         mac = "00:00:00:00:00:00"
         state = MachineStates.booting
-        msr = machine_state_repo.MachineStateRepository(self.smart)
+        msr = machine_state.MachineStateRepository(self.smart)
 
         with self.smart.new_session() as session:
             uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"

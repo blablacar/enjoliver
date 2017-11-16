@@ -1,4 +1,7 @@
-from enjoliver import sync, smartdb
+from sqlalchemy.orm import sessionmaker
+
+from enjoliver import sync
+from enjoliver.db import session_commit
 from enjoliver.model import (
     Machine,
     MachineInterface,
@@ -14,15 +17,15 @@ class UserInterfaceRepository:
     Get the data for the User Interface View
     """
 
-    def __init__(self, smart: smartdb.SmartDatabaseClient):
-        self.smart = smart
+    def __init__(self, sess_maker: sessionmaker):
+        self.__sess_maker = sess_maker
 
     def get_machines_overview(self):
         """
         TODO refactor this ugly stuff
         :return:
         """
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.__sess_maker) as session:
             # Fetching data
             mis = session.query(MachineInterface).filter(MachineInterface.as_boot == True).all()
             mds = session.query(MachineDisk).all()

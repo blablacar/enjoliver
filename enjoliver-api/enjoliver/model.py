@@ -4,15 +4,23 @@ Database Model for the application
 import datetime
 import re
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float
-from sqlalchemy import ForeignKey, Index
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates, foreign
 
-BASE = declarative_base()
+Base = declarative_base()
 
 
-def compile_regex(regex: str):
+def _compile_regex(regex: str):
     """
     Compile the regex for the module constants
     :param regex:
@@ -28,13 +36,13 @@ def compile_regex(regex: str):
     return match
 
 
-MAC_REGEX = compile_regex("^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$")
-IPV4_REGEX = compile_regex(
+MAC_REGEX = _compile_regex("^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$")
+IPV4_REGEX = _compile_regex(
     r"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$")
-UUID_REGEX = compile_regex("^([0-9A-Fa-f]{8}[-]){1}([0-9A-Fa-f]{4}[-]){3}([0-9A-Fa-f]{12})$")
+UUID_REGEX = _compile_regex("^([0-9A-Fa-f]{8}[-]){1}([0-9A-Fa-f]{4}[-]){3}([0-9A-Fa-f]{12})$")
 
 
-class Machine(BASE):
+class Machine(Base):
     """
     Machine represent the Virtual machine, Physical Server
     """
@@ -71,7 +79,7 @@ class Machine(BASE):
         return "<%s: %s %s %s>" % (Machine.__name__, self.uuid, self.created_date, self.updated_date)
 
 
-class Healthz(BASE):
+class Healthz(Base):
     """
     Healthz is used to check the write capabilities during health checks
     """
@@ -82,7 +90,7 @@ class Healthz(BASE):
     host = Column(String, nullable=True)
 
 
-class MachineDisk(BASE):
+class MachineDisk(Base):
     """
     The disk of each Machine
     Common disk is /dev/sda
@@ -96,7 +104,7 @@ class MachineDisk(BASE):
     machine_id = Column(Integer, ForeignKey('machine.id'))
 
 
-class MachineInterface(BASE):
+class MachineInterface(Base):
     """
     The interface of each Machine
     Common interface is eth0
@@ -140,7 +148,7 @@ class MachineInterface(BASE):
         return "<%s: %s %s>" % (MachineInterface.__name__, self.mac, self.cidrv4)
 
 
-class Chassis(BASE):
+class Chassis(Base):
     """
     Chassis is the physical switch inside a DataCenter
     Reports done with Link Layer Discovery Protocol
@@ -161,7 +169,7 @@ class Chassis(BASE):
         return "<%s: mac:%s name:%s>" % (Chassis.__name__, self.mac, self.name)
 
 
-class ChassisPort(BASE):
+class ChassisPort(Base):
     """
     Each chassis have interfaces == port
     """
@@ -206,7 +214,7 @@ class ScheduleRoles(object):
     roles = [etcd_member, kubernetes_control_plane, kubernetes_node]
 
 
-class Schedule(BASE):
+class Schedule(Base):
     """
     Schedule is a state of a machine associated to ScheduleRoles
     """
@@ -226,7 +234,7 @@ class Schedule(BASE):
         return role_name
 
 
-class LifecycleIgnition(BASE):
+class LifecycleIgnition(Base):
     """
     During the Lifecycle of a Machine, the state of the /usr/share/oem/coreos-install.json is POST to a dedicated Flask
     route, this table store this event and if the current Machine is up to date
@@ -243,7 +251,7 @@ class LifecycleIgnition(BASE):
     up_to_date = Column(Boolean)
 
 
-class MachineCurrentState(BASE):
+class MachineCurrentState(Base):
     __tablename__ = 'machine-current-state'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -270,7 +278,7 @@ class MachineCurrentState(BASE):
         return state_name
 
 
-class LifecycleCoreosInstall(BASE):
+class LifecycleCoreosInstall(Base):
     """
     After the script 'coreos-install' the discovery machine POST the success / failure to a dedicated Flask route
     """
@@ -285,7 +293,7 @@ class LifecycleCoreosInstall(BASE):
     success = Column(Boolean)
 
 
-class LifecycleRolling(BASE):
+class LifecycleRolling(Base):
     """
     Allow the current machine to used the semaphore locksmithd to do a rolling update
     By kexec / reboot / poweroff

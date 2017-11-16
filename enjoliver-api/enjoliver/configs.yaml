@@ -1,4 +1,4 @@
-#aws_id: null
+aws_id#aws_id: null
 #aws_secret: null
 #backup_bucket_name: ''
 backup_bucket_directory: 'enjoliver'
@@ -31,10 +31,7 @@ gunicorn_worker_type: 'sync'
 gunicorn_workers: 1
 gunicorn_bind: "0.0.0.0:5000"
 
-#db_path: '/var/lib/enjoliver/enjoliver.sqlite'
-
-#db_uri: 'cockroachdb://root@localhost:26257'
-#db_uri: 'sqlite:////var/lib/enjoliver/enjoliver.sqlite'
+db_uri: 'postgresql://127.0.0.1/enjoliver_local'
 
 #ignition_journal_dir: '/var/lib/enjoliver/ignition_journal'
 #werkzeug_fs_cache_dir: '/var/lib/enjoliver/werkzeug_cache'

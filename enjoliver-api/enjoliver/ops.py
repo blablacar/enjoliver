@@ -12,86 +12,15 @@ import time
 import psutil
 import requests
 from flask import jsonify
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
-from enjoliver import smartdb, objs3
+from enjoliver.db import session_commit
 from enjoliver.model import Healthz
 
 logger = logging.getLogger(__name__)
 
 
-def backup_sqlite(cache, application):
-    """
-    Backup the db by copying it and uploading to a S3 bucket
-    During the copy of the db a key is set inside the werkzeug cache to avoid writes
-        This key have a TTL and is always unset whatever the status of the backup
-    The application config contains the needed keys for the operation:
-        - BACKUP_BUCKET_NAME
-        - BACKUP_BUCKET_DIRECTORY
-        - DB_PATH
-        - BACKUP_LOCK_KEY
-    :return: Summary of the operation ; copy and upload keys summarize the result success
-    """
-    start = time.time()
-    now_rounded = int(math.ceil(start))
-    logger.info("start %s" % now_rounded)
-    dest_s3 = "%s/%s.db" % (application.config["BACKUP_BUCKET_DIRECTORY"], now_rounded)
-    db_path = application.config["DB_PATH"]
-    bucket_name = application.config["BACKUP_BUCKET_NAME"]
-    resp = {
-        "copy": False,
-        "upload": False,
-        "source_fs": db_path,
-        "dest_fs": "%s-%s.bak" % (db_path, now_rounded),
-        "dest_s3": dest_s3 if bucket_name else None,
-        "bucket_name": bucket_name,
-        "bucket_uri": "s3://%s/%s" % (bucket_name, dest_s3) if application.config[
-            "BACKUP_BUCKET_NAME"] else None,
-        "size": None,
-        "ts": now_rounded,
-        "backup_duration": None,
-        "lock_duration": None,
-        "already_locked": False,
-    }
-    if cache.get(application.config["BACKUP_LOCK_KEY"]):
-        resp["already_locked"] = True
-        logger.warning("already_locked")
-        return jsonify(resp)
-
-    try:
-        source_st = os.stat(resp["source_fs"])
-        timeout = math.ceil(source_st.st_size / (1024 * 1024.))
-        logger.info("Backup lock key set with timeout == %ss" % timeout)
-        cache.set(application.config["BACKUP_LOCK_KEY"], resp["dest_fs"], timeout=timeout)
-        os.system('sync')
-        shutil.copy2(db_path, resp["dest_fs"])
-        dest_st = os.stat(resp["dest_fs"])
-        resp["size"], resp["copy"] = dest_st.st_size, True
-        logger.info("backup copy done %s size:%s" % (resp["dest_fs"], dest_st.st_size))
-    except Exception as e:
-        logger.error("<%s %s>" % (e, type(e)))
-    finally:
-        cache.delete(application.config["BACKUP_LOCK_KEY"])
-        resp["lock_duration"] = time.time() - start
-        logger.debug("lock duration: %ss" % resp["lock_duration"])
-
-    try:
-        if resp["copy"] is False:
-            logger.error("copy is False: %s" % resp["dest_fs"])
-            raise IOError(resp["dest_fs"])
-
-        s3op = objs3.S3Operator(resp["bucket_name"])
-        s3op.upload(resp["dest_fs"], resp["dest_s3"])
-        resp["upload"] = True
-    except Exception as e:
-        logger.error("<%s %s>" % (e, type(e)))
-
-    resp["backup_duration"] = time.time() - start
-    logger.info("backup duration: %ss" % resp["backup_duration"])
-    return jsonify(resp)
-
-
-def healthz(application, smart: smartdb.SmartDatabaseClient, request):
+def healthz(application, sess_maker: sessionmaker, request):
     """
     Query all services and return the status
     :return: json
@@ -146,15 +75,13 @@ def healthz(application, smart: smartdb.SmartDatabaseClient, request):
         logger.error(e)
         status["global"] = False
 
-    @smartdb.cockroach_transaction
     def op(caller="/healthz"):
-        with smart.new_session() as session:
+        with session_commit(sess_maker=sess_maker) as session:
             return health_check(session, ts=time.time(), who=request.remote_addr)
 
     try:
         status["db"] = op("/healthz")
-        if len(smart.engines) > 1:
-            status["dbs"] = smart.engine_urls
+        status["dbs"] = 'UNKNOWN'
     except Exception as e:
         status["global"] = False
         logger.error(e)
@@ -221,10 +148,5 @@ def health_check(session: Session, ts: int, who: str):
         session.add(health)
     health.ts = ts
     health.host = who
-    session.commit()
     return True
 
-
-def health_check_purge(session):
-    session.query(Healthz).delete()
-    session.commit()

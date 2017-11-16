@@ -1,6 +1,6 @@
 import unittest
 
-from enjoliver import smartdb, model
+from enjoliver import model
 from enjoliver.model import (
     MachineCurrentState,
     MachineInterface,
@@ -11,7 +11,7 @@ from enjoliver.model import (
     ScheduleRoles,
     LifecycleRolling,
 )
-from enjoliver.repositories import user_interface_repo
+from enjoliver.repositories import user_interface
 
 
 class TestMachineStateRepo(unittest.TestCase):
@@ -26,7 +26,7 @@ class TestMachineStateRepo(unittest.TestCase):
         model.BASE.metadata.create_all(self.smart.get_engine_connection())
 
     def test_empty(self):
-        ui = user_interface_repo.UserInterfaceRepository(self.smart)
+        ui = user_interface.UserInterfaceRepository(self.smart)
         self.assertEqual([], ui.get_machines_overview())
 
     def test_one_machine_with_only_interfaces(self):
@@ -56,7 +56,7 @@ class TestMachineStateRepo(unittest.TestCase):
                 'LastState': None,
                 'Roles': ''}
         )
-        ui = user_interface_repo.UserInterfaceRepository(self.smart)
+        ui = user_interface.UserInterfaceRepository(self.smart)
         self.assertCountEqual(expect, ui.get_machines_overview())
 
     def test_one_machine_full(self):
@@ -92,7 +92,7 @@ class TestMachineStateRepo(unittest.TestCase):
                 'LastState': MachineStates.discovery,
                 'Roles': ''}
         )
-        ui = user_interface_repo.UserInterfaceRepository(self.smart)
+        ui = user_interface.UserInterfaceRepository(self.smart)
         data = ui.get_machines_overview()
         self.assertCountEqual(expect, data)
 
@@ -132,7 +132,7 @@ class TestMachineStateRepo(unittest.TestCase):
                 'LastState': MachineStates.discovery,
                 'Roles': ScheduleRoles.kubernetes_control_plane}
         )
-        ui = user_interface_repo.UserInterfaceRepository(self.smart)
+        ui = user_interface.UserInterfaceRepository(self.smart)
         data = ui.get_machines_overview()
         self.assertCountEqual(expect, data)
 
@@ -175,7 +175,7 @@ class TestMachineStateRepo(unittest.TestCase):
                 'LastState': MachineStates.discovery,
                 'Roles': ScheduleRoles.kubernetes_control_plane}
         )
-        ui = user_interface_repo.UserInterfaceRepository(self.smart)
+        ui = user_interface.UserInterfaceRepository(self.smart)
         data = ui.get_machines_overview()
         self.assertCountEqual(expect, data)
 
@@ -218,6 +218,6 @@ class TestMachineStateRepo(unittest.TestCase):
                 'LastState': MachineStates.discovery,
                 'Roles': ScheduleRoles.kubernetes_control_plane}
         )
-        ui = user_interface_repo.UserInterfaceRepository(self.smart)
+        ui = user_interface.UserInterfaceRepository(self.smart)
         data = ui.get_machines_overview()
         self.assertCountEqual(expect, data)
