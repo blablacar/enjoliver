@@ -3,23 +3,34 @@ import os
 import time
 import unittest
 
-from enjoliver import crud, model, ops
+from enjoliver import crud, ops
+from enjoliver.db import session_commit
+from enjoliver.model import (
+    Base,
+    LifecycleRolling,
+    Machine,
+    MachineCurrentState,
+    MachineDisk,
+    MachineInterface,
+    MachineStates,
+    Schedule,
+    ScheduleRoles,
+)
 from enjoliver.repositories.registry import RepositoryRegistry
 
 from tests.fixtures import posts
 
 
-class AbstractModelTestCase:
-    """
-    Abstract test definitions, concrete implementations must inherit from both this
-    and unittest.TestCase, eg:
+class ModelTestCase:
+    unit_path = os.path.dirname(os.path.abspath(__file__))
+    dbs_path = "%s/dbs" % unit_path
 
-    class ConcreteTestCase(AbstractModelTestCase, unittest.TestCase)
-
-    """
     @classmethod
     def setUpClass(cls):
-        raise NotImplementedError
+        db_uri = 'postgresql+psycopg2://enjoliver_testing'
+        cls.smart = smartdb.SmartDatabaseClient(db_uri)
+        cls.repositories = RepositoryRegistry(cls.smart)
+        cls.set_up_class_checks(cls.smart)
 
     @staticmethod
     def set_up_class_checks(smart):
@@ -437,26 +448,4 @@ class AbstractModelTestCase:
                 ops.health_check(session, time.time(), "unittest")
 
 
-class SqliteModelTestCase(AbstractModelTestCase, unittest.TestCase):
-    unit_path = os.path.dirname(os.path.abspath(__file__))
-    dbs_path = "%s/dbs" % unit_path
-
-    @classmethod
-    def setUpClass(cls):
-        db_uri = 'sqlite:///:memory:'
-
-        cls.smart = smartdb.SmartDatabaseClient(db_uri)
-        cls.repositories = RepositoryRegistry(cls.smart)
-        cls.set_up_class_checks(cls.smart)
-
-
 class PostgresModelTestCase(AbstractModelTestCase, unittest.TestCase):
-    unit_path = os.path.dirname(os.path.abspath(__file__))
-    dbs_path = "%s/dbs" % unit_path
-
-    @classmethod
-    def setUpClass(cls):
-        db_uri = "postgresql://postgres@localhost:5432"
-        cls.smart = smartdb.SmartDatabaseClient(db_uri)
-        cls.repositories = RepositoryRegistry(cls.smart)
-        cls.set_up_class_checks(cls.smart)

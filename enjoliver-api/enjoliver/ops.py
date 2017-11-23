@@ -81,7 +81,6 @@ def healthz(application, sess_maker: sessionmaker, request):
 
     try:
         status["db"] = op("/healthz")
-        status["dbs"] = 'UNKNOWN'
     except Exception as e:
         status["global"] = False
         logger.error(e)

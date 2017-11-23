@@ -22,29 +22,29 @@ class TestAPI(unittest.TestCase):
     # unit_path = os.path.dirname(os.path.abspath(__file__))
     # dbs_path = "%s/dbs" % unit_path
 
+    engine = None
+
+    @classmethod
+    def init_db(cls):
+        if cls.engine is None:
+            raise Exception('engine is None')
+
+        Base.metadata.drop_all(bind=cls.engine)
+        Base.metadata.create_all(bind=cls.engine)
+
     @classmethod
     def setUpClass(cls):
-        # api.ignition_journal = "%s/ignition_journal" % cls.unit_path
-        #
-        # shutil.rmtree(api.ignition_journal, ignore_errors=True)
-        # api.cache.clear()
-
         cls.ec = configs.EnjoliverConfig(importer=__file__)
         app = create_app('EnjoliverTest', ec=cls.ec)
         app.testing = True
-        engine = create_engine('postgresql://localhost/enjoliver_testing')
-        sess_maker = sessionmaker(bind=engine)
-        Base.metadata.drop_all(bind=engine)
-        Base.metadata.create_all(bind=engine)
+        cls.engine = create_engine('postgresql://localhost/enjoliver_testing')
+        cls.init_db()
+
+        sess_maker = sessionmaker(bind=cls.engine)
         registry = RepositoryRegistry(sess_maker=sess_maker)
         register_routes(app=app, ec=cls.ec, cache=SimpleCache(), sess_maker=sess_maker, registry=registry)
 
         cls.app = app.test_client()
-        # smart = api.SmartDatabaseClient(ec.db_uri)
-        # api.SMART = smart
-        # smart.create_base()
-        #
-        # api.repositories = api.RepositoryRegistry(smart)
 
     def test_healthz_00(self):
         expect = {
@@ -286,6 +286,7 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(200, r.status_code)
 
     def test_vue_machine(self):
+        # self.init_db()
         r = self.app.get("/ui/view/machine")
         json.loads(r.data.decode())
         self.assertEqual(200, r.status_code)

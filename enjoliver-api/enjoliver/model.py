@@ -5,6 +5,7 @@ import datetime
 import re
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     Column,
     DateTime,
@@ -95,13 +96,13 @@ class MachineDisk(Base):
     The disk of each Machine
     Common disk is /dev/sda
     """
-    __tablename__ = 'machine-disk'
+    __tablename__ = 'machine_disk'
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     path = Column(String, nullable=False)
-    size = Column(Integer, nullable=False)
+    size = Column(BigInteger, nullable=False)
 
-    machine_id = Column(Integer, ForeignKey('machine.id'))
+    machine_id = Column(Integer, ForeignKey(Machine.id))
 
 
 class MachineInterface(Base):
@@ -109,7 +110,7 @@ class MachineInterface(Base):
     The interface of each Machine
     Common interface is eth0
     """
-    __tablename__ = 'machine-interface'
+    __tablename__ = 'machine_interface'
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     mac = Column(String(17), nullable=False, index=True, unique=True)
@@ -121,7 +122,7 @@ class MachineInterface(Base):
     gateway = Column(String(15), nullable=False)
     fqdn = Column(String, nullable=True)
 
-    machine_id = Column(Integer, ForeignKey('machine.id'))
+    machine_id = Column(Integer, ForeignKey(Machine.id))
     chassis_port = relationship("ChassisPort")
 
     @validates('mac')
@@ -173,14 +174,14 @@ class ChassisPort(Base):
     """
     Each chassis have interfaces == port
     """
-    __tablename__ = 'chassis-port'
+    __tablename__ = 'chassis_port'
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Some constructor doesn't return a MAC address for the ID of a Port
     mac = Column(String, nullable=False)
-    chassis_id = Column(Integer, ForeignKey('chassis.id'))
+    chassis_id = Column(Integer, ForeignKey(Chassis.id))
 
-    machine_interface = Column(Integer, ForeignKey('machine-interface.id'))
+    machine_interface = Column(Integer, ForeignKey(MachineInterface.id))
 
     def __repr__(self):
         return "<%s: mac:%s chassis_mac:%s>" % (ChassisPort.__name__, self.mac, self.chassis_id)
@@ -223,7 +224,7 @@ class Schedule(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
 
-    machine_id = Column(Integer, ForeignKey('machine.id'))
+    machine_id = Column(Integer, ForeignKey(Machine.id))
 
     role = Column(String(len(max(ScheduleRoles.roles, key=len))), nullable=False)
 
@@ -239,12 +240,12 @@ class LifecycleIgnition(Base):
     During the Lifecycle of a Machine, the state of the /usr/share/oem/coreos-install.json is POST to a dedicated Flask
     route, this table store this event and if the current Machine is up to date
     """
-    __tablename__ = 'lifecycle-ignition'
+    __tablename__ = 'lifecycle_ignition'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
 
-    machine_id = Column(Integer, ForeignKey('machine.id'), nullable=False)
+    machine_id = Column(Integer, ForeignKey(Machine.id), nullable=False)
 
     updated_date = Column(DateTime, default=None)
     last_change_date = Column(DateTime, default=None)
@@ -252,10 +253,10 @@ class LifecycleIgnition(Base):
 
 
 class MachineCurrentState(Base):
-    __tablename__ = 'machine-current-state'
+    __tablename__ = 'machine_current_state'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    machine_id = Column(Integer, ForeignKey('machine.id'), nullable=True)
+    machine_id = Column(Integer, ForeignKey(Machine.id), nullable=True)
 
     machine_mac = Column(String(17), nullable=False, index=True, unique=True)
     state_name = Column(String(len(max(MachineStates.states, key=len))), nullable=False)
@@ -282,12 +283,12 @@ class LifecycleCoreosInstall(Base):
     """
     After the script 'coreos-install' the discovery machine POST the success / failure to a dedicated Flask route
     """
-    __tablename__ = 'lifecycle-coreos-install'
+    __tablename__ = 'lifecycle_coreos_install'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
 
-    machine_id = Column(Integer, ForeignKey('machine.id'), nullable=False)
+    machine_id = Column(Integer, ForeignKey(Machine.id), nullable=False)
 
     updated_date = Column(DateTime, default=datetime.datetime.utcnow)
     success = Column(Boolean)
@@ -298,13 +299,13 @@ class LifecycleRolling(Base):
     Allow the current machine to used the semaphore locksmithd to do a rolling update
     By kexec / reboot / poweroff
     """
-    __tablename__ = 'lifecycle-rolling'
+    __tablename__ = 'lifecycle_rolling'
     _strategy_choice = ["reboot", "kexec", "poweroff", None]
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
 
-    machine_id = Column(Integer, ForeignKey('machine.id'), nullable=False)
+    machine_id = Column(Integer, ForeignKey(Machine.id), nullable=False)
     updated_date = Column(DateTime, default=None)
     enable = Column(Boolean, default=False)
     strategy = Column(String, default="kexec")

@@ -1,38 +1,52 @@
 import unittest
 
-from enjoliver import model
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from enjoliver.db import session_commit
 from enjoliver.model import (
-    MachineCurrentState,
-    MachineInterface,
+    Base,
+    LifecycleRolling,
     Machine,
-    MachineStates,
+    MachineCurrentState,
     MachineDisk,
+    MachineInterface,
+    MachineStates,
     Schedule,
     ScheduleRoles,
-    LifecycleRolling,
 )
 from enjoliver.repositories import user_interface
 
 
 class TestMachineStateRepo(unittest.TestCase):
+    engine = None
+
+    @classmethod
+    def init_db(cls):
+        if cls.engine is None:
+            raise Exception('engine is None')
+
+        Base.metadata.drop_all(bind=cls.engine)
+        Base.metadata.create_all(bind=cls.engine)
+
     @classmethod
     def setUpClass(cls):
-        db_uri = 'sqlite:///:memory:'
+        cls.engine = create_engine('postgresql://localhost/enjoliver_testing')
+        cls.init_db()
 
-        cls.smart = smartdb.SmartDatabaseClient(db_uri)
+        cls.sess_maker = sessionmaker(bind=cls.engine)
 
     def setUp(self):
-        model.BASE.metadata.drop_all(self.smart.get_engine_connection())
-        model.BASE.metadata.create_all(self.smart.get_engine_connection())
+        self.init_db()
 
     def test_empty(self):
-        ui = user_interface.UserInterfaceRepository(self.smart)
+        ui = user_interface.UserInterfaceRepository(sess_maker=self.sess_maker)
         self.assertEqual([], ui.get_machines_overview())
 
     def test_one_machine_with_only_interfaces(self):
         mac = "00:00:00:00:00:00"
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"
             machine = Machine(uuid=uuid)
             session.add(machine)
@@ -56,13 +70,13 @@ class TestMachineStateRepo(unittest.TestCase):
                 'LastState': None,
                 'Roles': ''}
         )
-        ui = user_interface.UserInterfaceRepository(self.smart)
+        ui = user_interface.UserInterfaceRepository(sess_maker=self.sess_maker)
         self.assertCountEqual(expect, ui.get_machines_overview())
 
     def test_one_machine_full(self):
         mac = "00:00:00:00:00:00"
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"
             machine = Machine(uuid=uuid)
             session.add(machine)
@@ -92,14 +106,14 @@ class TestMachineStateRepo(unittest.TestCase):
                 'LastState': MachineStates.discovery,
                 'Roles': ''}
         )
-        ui = user_interface.UserInterfaceRepository(self.smart)
+        ui = user_interface.UserInterfaceRepository(sess_maker=self.sess_maker)
         data = ui.get_machines_overview()
         self.assertCountEqual(expect, data)
 
     def test_one_machine_full_scheduled(self):
         mac = "00:00:00:00:00:00"
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"
             machine = Machine(uuid=uuid)
             session.add(machine)
@@ -132,14 +146,14 @@ class TestMachineStateRepo(unittest.TestCase):
                 'LastState': MachineStates.discovery,
                 'Roles': ScheduleRoles.kubernetes_control_plane}
         )
-        ui = user_interface.UserInterfaceRepository(self.smart)
+        ui = user_interface.UserInterfaceRepository(sess_maker=self.sess_maker)
         data = ui.get_machines_overview()
         self.assertCountEqual(expect, data)
 
     def test_one_machine_full_scheduled_with_strategy(self):
         mac = "00:00:00:00:00:00"
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"
             machine = Machine(uuid=uuid)
             session.add(machine)
@@ -175,14 +189,14 @@ class TestMachineStateRepo(unittest.TestCase):
                 'LastState': MachineStates.discovery,
                 'Roles': ScheduleRoles.kubernetes_control_plane}
         )
-        ui = user_interface.UserInterfaceRepository(self.smart)
+        ui = user_interface.UserInterfaceRepository(sess_maker=self.sess_maker)
         data = ui.get_machines_overview()
         self.assertCountEqual(expect, data)
 
     def test_one_machine_full_scheduled_with_strategy_disable(self):
         mac = "00:00:00:00:00:00"
 
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"
             machine = Machine(uuid=uuid)
             session.add(machine)
@@ -218,6 +232,6 @@ class TestMachineStateRepo(unittest.TestCase):
                 'LastState': MachineStates.discovery,
                 'Roles': ScheduleRoles.kubernetes_control_plane}
         )
-        ui = user_interface.UserInterfaceRepository(self.smart)
+        ui = user_interface.UserInterfaceRepository(sess_maker=self.sess_maker)
         data = ui.get_machines_overview()
         self.assertCountEqual(expect, data)
