@@ -31,7 +31,7 @@ class TestMachineStateRepo(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine('postgresql://localhost/enjoliver_testing')
+        cls.engine = create_engine('postgresql+psycopg2://localhost/enjoliver_testing')
         cls.init_db()
 
         cls.sess_maker = sessionmaker(bind=cls.engine)

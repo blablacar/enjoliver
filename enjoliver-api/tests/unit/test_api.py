@@ -37,7 +37,7 @@ class TestAPI(unittest.TestCase):
         cls.ec = configs.EnjoliverConfig(importer=__file__)
         app = create_app('EnjoliverTest', ec=cls.ec)
         app.testing = True
-        cls.engine = create_engine('postgresql://localhost/enjoliver_testing')
+        cls.engine = create_engine('postgresql+psycopg2://localhost/enjoliver_testing')
         cls.init_db()
 
         sess_maker = sessionmaker(bind=cls.engine)

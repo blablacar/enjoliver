@@ -1,27 +1,40 @@
 import unittest
 
-from enjoliver import model
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.engine import Engine
+
+from enjoliver.db import session_commit
+from enjoliver.model import Base, Machine, MachineInterface, Schedule, ScheduleRoles
 from enjoliver.repositories.machine_discovery import MachineDiscoveryRepository
-from enjoliver.model import MachineInterface, Machine, Schedule, ScheduleRoles
 from enjoliver.repositories.machine_schedule import MachineScheduleRepository
 
 from tests.fixtures import posts
 
 
 class TestMachineScheduleRepo(unittest.TestCase):
+    engine = None  # type: Engine
+
+    @classmethod
+    def init_db(cls):
+        if cls.engine is None:
+            raise Exception('engine is None')
+
+        Base.metadata.drop_all(bind=cls.engine)
+        Base.metadata.create_all(bind=cls.engine)
+
     @classmethod
     def setUpClass(cls):
-        db_uri = 'sqlite:///:memory:'
-
-        cls.smart = smartdb.SmartDatabaseClient(db_uri)
+        db_uri = 'postgresql+psycopg2://localhost/enjoliver_testing'
+        cls.engine = create_engine(db_uri)
+        cls.sess_maker = sessionmaker(bind=cls.engine)
 
     def setUp(self):
-        model.BASE.metadata.drop_all(self.smart.get_engine_connection())
-        model.BASE.metadata.create_all(self.smart.get_engine_connection())
+        self.init_db()
 
     def test_one_machine(self):
         mac = "00:00:00:00:00:00"
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"
             machine = Machine(uuid=uuid)
             session.add(machine)
@@ -31,13 +44,13 @@ class TestMachineScheduleRepo(unittest.TestCase):
                                  as_boot=True, gateway="1.1.1.1", name="lol"))
             session.commit()
 
-        ms = MachineScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
         ret = ms.get_available_machines()
         self.assertEqual(1, len(ret))
 
     def test_one_machine_scheduled_node(self):
         mac = "00:00:00:00:00:00"
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"
             machine = Machine(uuid=uuid)
             session.add(machine)
@@ -50,7 +63,7 @@ class TestMachineScheduleRepo(unittest.TestCase):
                 role=ScheduleRoles.kubernetes_node))
             session.commit()
 
-        ms = MachineScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
         ret = ms.get_available_machines()
         self.assertEqual(0, len(ret))
         ret = ms.get_roles_by_mac_selector(mac)
@@ -66,7 +79,7 @@ class TestMachineScheduleRepo(unittest.TestCase):
 
     def test_one_machine_scheduled_cp(self):
         mac = "00:00:00:00:00:00"
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"
             machine = Machine(uuid=uuid)
             session.add(machine)
@@ -82,7 +95,7 @@ class TestMachineScheduleRepo(unittest.TestCase):
                 role=ScheduleRoles.kubernetes_control_plane))
             session.commit()
 
-        ms = MachineScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
         ret = ms.get_available_machines()
         self.assertEqual(0, len(ret))
 
@@ -103,7 +116,7 @@ class TestMachineScheduleRepo(unittest.TestCase):
 
     def test_one_machine_scheduled_etcd(self):
         mac = "00:00:00:00:00:00"
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"
             machine = Machine(uuid=uuid)
             session.add(machine)
@@ -116,7 +129,7 @@ class TestMachineScheduleRepo(unittest.TestCase):
                 role=ScheduleRoles.etcd_member))
             session.commit()
 
-        ms = MachineScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
         ret = ms.get_available_machines()
         self.assertEqual(0, len(ret))
 
@@ -136,68 +149,68 @@ class TestMachineScheduleRepo(unittest.TestCase):
         self.assertEqual(0, len(ret))
 
     def test_one_machine_discovery(self):
-        mds = MachineDiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(sess_maker=self.sess_maker)
         mds.upsert(posts.M01)
-        ms = MachineScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
         ret = ms.get_available_machines()
         self.assertEqual(1, len(ret))
 
     def test_two_machine_discovery(self):
-        mds = MachineDiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(sess_maker=self.sess_maker)
         mds.upsert(posts.M01)
         mds.upsert(posts.M02)
-        ms = MachineScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
         ret = ms.get_available_machines()
         self.assertEqual(2, len(ret))
 
     def test_two_machine_discovery_idemp(self):
-        mds = MachineDiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(sess_maker=self.sess_maker)
         mds.upsert(posts.M01)
         mds.upsert(posts.M02)
-        ms = MachineScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
         ret = ms.get_available_machines()
         self.assertEqual(2, len(ret))
-        ms = MachineScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
         ret = ms.get_available_machines()
         self.assertEqual(2, len(ret))
 
     def test_machine_without_role(self):
-        mds = MachineDiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(sess_maker=self.sess_maker)
         mds.upsert(posts.M01)
         mds.upsert(posts.M02)
-        ms = MachineScheduleRepository(self.smart)
-        for role in model.ScheduleRoles.roles:
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
+        for role in ScheduleRoles.roles:
             ret = ms.get_machines_by_role(role)
             self.assertEqual(0, len(ret))
 
     def test_machine_without_role2(self):
-        mds = MachineDiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(sess_maker=self.sess_maker)
         mds.upsert(posts.M01)
         mds.upsert(posts.M02)
-        ms = MachineScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
         ret = ms.get_all_schedules()
         self.assertEqual(0, len(ret))
 
     def test_machine_without_role3(self):
-        mds = MachineDiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(sess_maker=self.sess_maker)
         mds.upsert(posts.M01)
         mds.upsert(posts.M02)
-        ms = MachineScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
         ret = ms.get_roles_by_mac_selector(posts.M01["boot-info"]["mac"])
         self.assertEqual(0, len(ret))
 
     def test_machine_without_role4(self):
-        mds = MachineDiscoveryRepository(self.smart)
+        mds = MachineDiscoveryRepository(sess_maker=self.sess_maker)
         mds.upsert(posts.M01)
         mds.upsert(posts.M02)
-        ms = MachineScheduleRepository(self.smart)
-        for role in model.ScheduleRoles.roles:
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
+        for role in ScheduleRoles.roles:
             ret = ms.get_role_ip_list(role)
             self.assertEqual(0, len(ret))
 
     def test_one_machine_to_schedule(self):
         mac = "00:00:00:00:00:00"
-        with self.smart.new_session() as session:
+        with session_commit(sess_maker=self.sess_maker) as session:
             uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"
             machine = Machine(uuid=uuid)
             session.add(machine)
@@ -208,7 +221,7 @@ class TestMachineScheduleRepo(unittest.TestCase):
 
             session.commit()
 
-        ms = MachineScheduleRepository(self.smart)
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
         data = {
             "roles": ["kubernetes-control-plane", "etcd-member"],
             "selector": {
