@@ -98,11 +98,7 @@ def register_routes(
             schema:
                 type: list
         """
-        with session_commit(sess_maker=sess_maker) as session:
-            exporter = crud.BackupExport(session)
-            playbook = exporter.get_playbook()
-
-        return jsonify(playbook), 200
+        return jsonify(crud.BackupExport(sess_maker=sess_maker).get_playbook())
 
     @app.route('/boot.ipxe', methods=['GET'])
     @app.route('/boot.ipxe.0', methods=['GET'])
@@ -408,11 +404,7 @@ def register_routes(
             schema:
                 type: list
         """
-        with session_commit(sess_maker=sess_maker) as session:
-            fetch = crud.FetchLifecycle(session)
-            install_status_list = fetch.get_all_coreos_install_status()
-
-        return jsonify(install_status_list)
+        return jsonify(crud.FetchLifecycle(sess_maker=sess_maker).get_all_coreos_install_status())
 
     @app.route("/lifecycle/coreos-install/<string:status>/<string:request_raw_query>", methods=["POST"])
     def report_lifecycle_coreos_install(status, request_raw_query):
@@ -460,11 +452,7 @@ def register_routes(
             schema:
                 type: list
         """
-        with session_commit(sess_maker=sess_maker) as session:
-            fetch = crud.FetchLifecycle(session)
-            updated_status_list = fetch.get_all_updated_status()
-
-        return jsonify(updated_status_list), 200
+        return jsonify(crud.FetchLifecycle(sess_maker=sess_maker).get_all_updated_status())
 
     @app.route("/lifecycle/ignition/<string:request_raw_query>", methods=["POST"])
     def submit_lifecycle_ignition(request_raw_query):
@@ -516,11 +504,7 @@ def register_routes(
             schema:
                 type: list
         """
-        with session_commit(sess_maker=sess_maker) as session:
-            fetch = crud.FetchLifecycle(session)
-            rolling_status_list = fetch.get_all_rolling_status()
-
-        return jsonify(rolling_status_list), 200
+        return jsonify(crud.FetchLifecycle(sess_maker=sess_maker).get_all_rolling_status())
 
     @app.route("/lifecycle/rolling/<string:request_raw_query>", methods=["GET"])
     def report_lifecycle_rolling(request_raw_query):
@@ -550,19 +534,18 @@ def register_routes(
             schema:
                 type: dict
         """
-        with session_commit(sess_maker=sess_maker) as session:
-            life = crud.FetchLifecycle(session)
-            try:
-                mac = tools.get_mac_from_raw_query(request_raw_query)
-            except AttributeError as e:
-                return jsonify({"enable": None, "request_raw_query": "%s:%s" % (request_raw_query, e)}), 403
+        life = crud.FetchLifecycle(sess_maker=sess_maker)
+        try:
+            mac = tools.get_mac_from_raw_query(request_raw_query)
+        except AttributeError as e:
+            return jsonify({"enable": None, "request_raw_query": "%s:%s" % (request_raw_query, e)}), 403
 
-            allow, strategy = life.get_rolling_status(mac)
+        allow, strategy = life.get_rolling_status(mac)
 
-            if allow is True:
-                return jsonify({"enable": True, "request_raw_query": request_raw_query, "strategy": strategy}), 200
-            elif allow is False:
-                return jsonify({"enable": False, "request_raw_query": request_raw_query, "strategy": strategy}), 403
+        if allow is True:
+            return jsonify({"enable": True, "request_raw_query": request_raw_query, "strategy": strategy}), 200
+        elif allow is False:
+            return jsonify({"enable": False, "request_raw_query": request_raw_query, "strategy": strategy}), 403
 
         return jsonify({"enable": False, "request_raw_query": request_raw_query, "strategy": None}), 401
 

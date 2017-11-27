@@ -1,11 +1,11 @@
 from contextlib import contextmanager
 
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 
 @contextmanager
-def session_commit(sess_maker: sessionmaker):
+def session_commit(sess_maker: sessionmaker) -> Session:
     """
     Yield a session created with the given sessionmaker. The yeld session is set with autocommit=False, no matter what
     is the sessiomaker's setting.

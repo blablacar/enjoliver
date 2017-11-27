@@ -43,6 +43,139 @@ IPV4_REGEX = _compile_regex(
 UUID_REGEX = _compile_regex("^([0-9A-Fa-f]{8}[-]){1}([0-9A-Fa-f]{4}[-]){3}([0-9A-Fa-f]{12})$")
 
 
+class MachineStates:
+    """
+    States of Machine that can occurs while booting
+    """
+
+    booting = "booting"
+    discovery = "discovery"
+    os_installation_granted = "os_installation_granted"
+    os_installation_denied = "os_installation_denied"
+    installation_succeed = "installation_succeed"
+    installation_failed = "installation_failed"
+
+    states = [booting, discovery, os_installation_denied, os_installation_granted, installation_failed,
+              installation_succeed]
+
+
+class ScheduleRoles:
+    """
+    Roles available for the Scheduler
+    Roles can be stacked
+    """
+    etcd_member = "etcd-member"
+    kubernetes_control_plane = "kubernetes-control-plane"
+    kubernetes_node = "kubernetes-node"
+
+    roles = [etcd_member, kubernetes_control_plane, kubernetes_node]
+
+
+# Models, sorted by name
+class Chassis(Base):
+    """
+    Chassis is the physical switch inside a DataCenter
+    Reports done with Link Layer Discovery Protocol
+    """
+    __tablename__ = 'chassis'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    name = Column(String, nullable=False)
+    mac = Column(String(17), nullable=False)
+
+    ports = relationship('ChassisPort')
+
+    @validates('mac')
+    def validate_mac(self, key, mac):
+        return MAC_REGEX(mac)
+
+    def __repr__(self):
+        return "<%s: mac:%s name:%s>" % (Chassis.__name__, self.mac, self.name)
+
+
+class ChassisPort(Base):
+    """
+    Each chassis have interfaces == port
+    """
+    __tablename__ = 'chassis_port'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Some constructor doesn't return a MAC address for the ID of a Port
+    mac = Column(String, nullable=False)
+    chassis_id = Column(Integer, ForeignKey('chassis.id'))
+
+    machine_interface = Column(Integer, ForeignKey('machine_interface.id'))
+
+    def __repr__(self):
+        return "<%s: mac:%s chassis_mac:%s>" % (ChassisPort.__name__, self.mac, self.chassis_id)
+
+
+class Healthz(Base):
+    """
+    Healthz is used to check the write capabilities during health checks
+    """
+    __tablename__ = 'healthz'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    ts = Column(Float, nullable=False)
+    host = Column(String, nullable=True)
+
+
+class LifecycleCoreosInstall(Base):
+    """
+    After the script 'coreos-install' the discovery machine POST the success / failure to a dedicated Flask route
+    """
+    __tablename__ = 'lifecycle_coreos_install'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_date = Column(DateTime, default=datetime.datetime.utcnow)
+
+    machine_id = Column(Integer, ForeignKey('machine.id'), nullable=False)
+
+    updated_date = Column(DateTime, default=datetime.datetime.utcnow)
+    success = Column(Boolean)
+
+
+class LifecycleIgnition(Base):
+    """
+    During the Lifecycle of a Machine, the state of the /usr/share/oem/coreos-install.json is POST to a dedicated Flask
+    route, this table store this event and if the current Machine is up to date
+    """
+    __tablename__ = 'lifecycle_ignition'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_date = Column(DateTime, default=datetime.datetime.utcnow)
+
+    machine_id = Column(Integer, ForeignKey('machine.id'), nullable=False)
+
+    updated_date = Column(DateTime, default=None)
+    last_change_date = Column(DateTime, default=None)
+    up_to_date = Column(Boolean)
+
+
+class LifecycleRolling(Base):
+    """
+    Allow the current machine to used the semaphore locksmithd to do a rolling update
+    By kexec / reboot / poweroff
+    """
+    __tablename__ = 'lifecycle_rolling'
+    _strategy_choice = ["reboot", "kexec", "poweroff", None]
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_date = Column(DateTime, default=datetime.datetime.utcnow)
+
+    machine_id = Column(Integer, ForeignKey('machine.id'), nullable=False)
+    updated_date = Column(DateTime, default=None)
+    enable = Column(Boolean, default=False)
+    strategy = Column(String, default="kexec")
+
+    @validates('strategy')
+    def validate_role(self, key, strategy):
+        if strategy not in self._strategy_choice:
+            raise LookupError("%s not in %s" % (strategy, self._strategy_choice))
+        return strategy
+
+
 class Machine(Base):
     """
     Machine represent the Virtual machine, Physical Server
@@ -54,15 +187,15 @@ class Machine(Base):
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
     updated_date = Column(DateTime, default=None)
 
-    interfaces = relationship("MachineInterface")
-    disks = relationship("MachineDisk")
-    schedules = relationship("Schedule")
+    interfaces = relationship('MachineInterface')
+    disks = relationship('MachineDisk')
+    schedules = relationship('Schedule')
 
-    lifecycle_rolling = relationship("LifecycleRolling")
-    lifecycle_coreos_install = relationship("LifecycleCoreosInstall")
-    lifecycle_ignition = relationship("LifecycleIgnition")
+    lifecycle_rolling = relationship('LifecycleRolling')
+    lifecycle_coreos_install = relationship('LifecycleCoreosInstall')
+    lifecycle_ignition = relationship('LifecycleIgnition')
 
-    machine_state = relationship("MachineCurrentState")
+    machine_state = relationship('MachineCurrentState')
 
     @validates('uuid')
     def validate_uuid_field(self, key, uuid):
@@ -80,15 +213,31 @@ class Machine(Base):
         return "<%s: %s %s %s>" % (Machine.__name__, self.uuid, self.created_date, self.updated_date)
 
 
-class Healthz(Base):
-    """
-    Healthz is used to check the write capabilities during health checks
-    """
-    __tablename__ = 'healthz'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class MachineCurrentState(Base):
+    __tablename__ = 'machine_current_state'
 
-    ts = Column(Float, nullable=False)
-    host = Column(String, nullable=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    machine_id = Column(Integer, ForeignKey('machine.id'), nullable=True)
+
+    machine_mac = Column(String(17), nullable=False, index=True, unique=True)
+    state_name = Column(String(len(max(MachineStates.states, key=len))), nullable=False)
+    created_date = Column(DateTime)
+    updated_date = Column(DateTime)
+
+    machine = relationship('Machine')
+    interfaces = relationship('MachineInterface', primaryjoin='MachineCurrentState.machine_id == foreign(MachineInterface.machine_id)')
+
+    Index('idx_update_date_desc', updated_date.desc())
+
+    @validates('mac')
+    def validate_mac(self, key, machine_mac):
+        return MAC_REGEX(machine_mac)
+
+    @validates('state_name')
+    def validate_role(self, key, state_name):
+        if state_name not in MachineStates.states:
+            raise LookupError("%s not in %s" % (state_name, MachineStates.states))
+        return state_name
 
 
 class MachineDisk(Base):
@@ -102,7 +251,7 @@ class MachineDisk(Base):
     path = Column(String, nullable=False)
     size = Column(BigInteger, nullable=False)
 
-    machine_id = Column(Integer, ForeignKey(Machine.id))
+    machine_id = Column(Integer, ForeignKey('machine.id'))
 
 
 class MachineInterface(Base):
@@ -122,8 +271,8 @@ class MachineInterface(Base):
     gateway = Column(String(15), nullable=False)
     fqdn = Column(String, nullable=True)
 
-    machine_id = Column(Integer, ForeignKey(Machine.id))
-    chassis_port = relationship("ChassisPort")
+    machine_id = Column(Integer, ForeignKey('machine.id'))
+    chassis_port = relationship('ChassisPort')
 
     @validates('mac')
     def validate_mac(self, key, mac):
@@ -149,72 +298,6 @@ class MachineInterface(Base):
         return "<%s: %s %s>" % (MachineInterface.__name__, self.mac, self.cidrv4)
 
 
-class Chassis(Base):
-    """
-    Chassis is the physical switch inside a DataCenter
-    Reports done with Link Layer Discovery Protocol
-    """
-    __tablename__ = 'chassis'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
-    name = Column(String, nullable=False)
-    mac = Column(String(17), nullable=False)
-
-    ports = relationship("ChassisPort")
-
-    @validates('mac')
-    def validate_mac(self, key, mac):
-        return MAC_REGEX(mac)
-
-    def __repr__(self):
-        return "<%s: mac:%s name:%s>" % (Chassis.__name__, self.mac, self.name)
-
-
-class ChassisPort(Base):
-    """
-    Each chassis have interfaces == port
-    """
-    __tablename__ = 'chassis_port'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
-    # Some constructor doesn't return a MAC address for the ID of a Port
-    mac = Column(String, nullable=False)
-    chassis_id = Column(Integer, ForeignKey(Chassis.id))
-
-    machine_interface = Column(Integer, ForeignKey(MachineInterface.id))
-
-    def __repr__(self):
-        return "<%s: mac:%s chassis_mac:%s>" % (ChassisPort.__name__, self.mac, self.chassis_id)
-
-
-class MachineStates:
-    """
-    States of Machine that can occurs while booting
-    """
-
-    booting = "booting"
-    discovery = "discovery"
-    os_installation_granted = "os_installation_granted"
-    os_installation_denied = "os_installation_denied"
-    installation_succeed = "installation_succeed"
-    installation_failed = "installation_failed"
-
-    states = [booting, discovery, os_installation_denied, os_installation_granted, installation_failed,
-              installation_succeed]
-
-
-class ScheduleRoles(object):
-    """
-    Roles available for the Scheduler
-    Roles can be stacked
-    """
-    etcd_member = "etcd-member"
-    kubernetes_control_plane = "kubernetes-control-plane"
-    kubernetes_node = "kubernetes-node"
-
-    roles = [etcd_member, kubernetes_control_plane, kubernetes_node]
-
-
 class Schedule(Base):
     """
     Schedule is a state of a machine associated to ScheduleRoles
@@ -224,7 +307,7 @@ class Schedule(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
 
-    machine_id = Column(Integer, ForeignKey(Machine.id))
+    machine_id = Column(Integer, ForeignKey('machine.id'))
 
     role = Column(String(len(max(ScheduleRoles.roles, key=len))), nullable=False)
 
@@ -233,85 +316,3 @@ class Schedule(Base):
         if role_name not in ScheduleRoles.roles:
             raise LookupError("%s not in %s" % (role_name, ScheduleRoles.roles))
         return role_name
-
-
-class LifecycleIgnition(Base):
-    """
-    During the Lifecycle of a Machine, the state of the /usr/share/oem/coreos-install.json is POST to a dedicated Flask
-    route, this table store this event and if the current Machine is up to date
-    """
-    __tablename__ = 'lifecycle_ignition'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    created_date = Column(DateTime, default=datetime.datetime.utcnow)
-
-    machine_id = Column(Integer, ForeignKey(Machine.id), nullable=False)
-
-    updated_date = Column(DateTime, default=None)
-    last_change_date = Column(DateTime, default=None)
-    up_to_date = Column(Boolean)
-
-
-class MachineCurrentState(Base):
-    __tablename__ = 'machine_current_state'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    machine_id = Column(Integer, ForeignKey(Machine.id), nullable=True)
-
-    machine_mac = Column(String(17), nullable=False, index=True, unique=True)
-    state_name = Column(String(len(max(MachineStates.states, key=len))), nullable=False)
-    created_date = Column(DateTime)
-    updated_date = Column(DateTime)
-
-    machine = relationship("Machine")
-    interfaces = relationship("MachineInterface", primaryjoin=machine_id == foreign(MachineInterface.machine_id))
-
-    Index('idx_update_date_desc', updated_date.desc())
-
-    @validates('mac')
-    def validate_mac(self, key, machine_mac):
-        return MAC_REGEX(machine_mac)
-
-    @validates('state_name')
-    def validate_role(self, key, state_name):
-        if state_name not in MachineStates.states:
-            raise LookupError("%s not in %s" % (state_name, MachineStates.states))
-        return state_name
-
-
-class LifecycleCoreosInstall(Base):
-    """
-    After the script 'coreos-install' the discovery machine POST the success / failure to a dedicated Flask route
-    """
-    __tablename__ = 'lifecycle_coreos_install'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    created_date = Column(DateTime, default=datetime.datetime.utcnow)
-
-    machine_id = Column(Integer, ForeignKey(Machine.id), nullable=False)
-
-    updated_date = Column(DateTime, default=datetime.datetime.utcnow)
-    success = Column(Boolean)
-
-
-class LifecycleRolling(Base):
-    """
-    Allow the current machine to used the semaphore locksmithd to do a rolling update
-    By kexec / reboot / poweroff
-    """
-    __tablename__ = 'lifecycle_rolling'
-    _strategy_choice = ["reboot", "kexec", "poweroff", None]
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    created_date = Column(DateTime, default=datetime.datetime.utcnow)
-
-    machine_id = Column(Integer, ForeignKey(Machine.id), nullable=False)
-    updated_date = Column(DateTime, default=None)
-    enable = Column(Boolean, default=False)
-    strategy = Column(String, default="kexec")
-
-    @validates('strategy')
-    def validate_role(self, key, strategy):
-        if strategy not in self._strategy_choice:
-            raise LookupError("%s not in %s" % (strategy, self._strategy_choice))
-        return strategy

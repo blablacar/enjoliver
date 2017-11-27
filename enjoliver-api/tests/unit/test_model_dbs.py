@@ -337,9 +337,8 @@ class ModelTestCase(unittest.TestCase):
             i.refresh_lifecycle_ignition(True)
             j = crud.InjectLifecycle(session, request_raw_query=rq)
             j.refresh_lifecycle_ignition(True)
-        with session_commit(sess_maker=self.sess_maker) as session:
-            f = crud.FetchLifecycle(session)
-            self.assertTrue(f.get_ignition_uptodate_status(posts.M02["boot-info"]["mac"]))
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        self.assertTrue(f.get_ignition_uptodate_status(posts.M02["boot-info"]["mac"]))
 
     def test_34(self):
         with session_commit(sess_maker=self.sess_maker) as session:
@@ -349,20 +348,18 @@ class ModelTestCase(unittest.TestCase):
         with session_commit(sess_maker=self.sess_maker) as session:
             j = crud.InjectLifecycle(session, request_raw_query=rq)
             j.refresh_lifecycle_ignition(False)
-        with session_commit(sess_maker=self.sess_maker) as session:
-            f = crud.FetchLifecycle(session)
-            self.assertFalse(f.get_ignition_uptodate_status(posts.M03["boot-info"]["mac"]))
-            self.assertEqual(3, len(f.get_all_updated_status()))
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        self.assertFalse(f.get_ignition_uptodate_status(posts.M03["boot-info"]["mac"]))
+        self.assertEqual(3, len(f.get_all_updated_status()))
 
     def test_35(self):
         with session_commit(sess_maker=self.sess_maker) as session:
             rq = "uuid=%s&mac=%s&os=installed" % (posts.M03["boot-info"]["uuid"], posts.M03["boot-info"]["mac"])
             i = crud.InjectLifecycle(session, request_raw_query=rq)
             i.refresh_lifecycle_coreos_install(True)
-        with session_commit(sess_maker=self.sess_maker) as session:
-            f = crud.FetchLifecycle(session)
-            self.assertTrue(f.get_coreos_install_status(posts.M03["boot-info"]["mac"]))
-            self.assertEqual(1, len(f.get_all_coreos_install_status()))
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        self.assertTrue(f.get_coreos_install_status(posts.M03["boot-info"]["mac"]))
+        self.assertEqual(1, len(f.get_all_coreos_install_status()))
 
     def test_36(self):
         with session_commit(sess_maker=self.sess_maker) as session:
@@ -370,67 +367,59 @@ class ModelTestCase(unittest.TestCase):
             i = crud.InjectLifecycle(session, request_raw_query=rq)
             i.apply_lifecycle_rolling(True)
 
-        with session_commit(sess_maker=self.sess_maker) as session:
-            f = crud.FetchLifecycle(session)
-            status = f.get_rolling_status(posts.M03["boot-info"]["mac"])
-            self.assertTrue(status[0])
-            self.assertEqual("kexec", status[1])
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        status = f.get_rolling_status(posts.M03["boot-info"]["mac"])
+        self.assertTrue(status[0])
+        self.assertEqual("kexec", status[1])
 
         with session_commit(sess_maker=self.sess_maker) as session:
             n = crud.InjectLifecycle(session, rq)
             n.apply_lifecycle_rolling(False)
 
-        with session_commit(sess_maker=self.sess_maker) as session:
-            f = crud.FetchLifecycle(session)
-            r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
-            self.assertFalse(r[0])
-            self.assertEqual("kexec", r[1])
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
+        self.assertFalse(r[0])
+        self.assertEqual("kexec", r[1])
 
         with session_commit(sess_maker=self.sess_maker) as session:
             n = crud.InjectLifecycle(session, rq)
             n.apply_lifecycle_rolling(True, "reboot")
 
-        with session_commit(sess_maker=self.sess_maker) as session:
-            f = crud.FetchLifecycle(session)
-            r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
-            self.assertTrue(r[0])
-            self.assertEqual("reboot", r[1])
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
+        self.assertTrue(r[0])
+        self.assertEqual("reboot", r[1])
 
         with session_commit(sess_maker=self.sess_maker) as session:
             n = crud.InjectLifecycle(session, rq)
             n.apply_lifecycle_rolling(True, "poweroff")
 
-        with session_commit(sess_maker=self.sess_maker) as session:
-            f = crud.FetchLifecycle(session)
-            r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
-            self.assertTrue(r[0])
-            self.assertEqual("poweroff", r[1])
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
+        self.assertTrue(r[0])
+        self.assertEqual("poweroff", r[1])
 
         with session_commit(sess_maker=self.sess_maker) as session:
             n = crud.InjectLifecycle(session, rq)
             with self.assertRaises(LookupError):
                 n.apply_lifecycle_rolling(True, "notpossible")
 
-        with session_commit(sess_maker=self.sess_maker) as session:
-            f = crud.FetchLifecycle(session)
-            r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
-            self.assertTrue(r[0])
-            self.assertEqual("poweroff", r[1])
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        r = f.get_rolling_status(posts.M03["boot-info"]["mac"])
+        self.assertTrue(r[0])
+        self.assertEqual("poweroff", r[1])
 
     def test_37(self):
-        with session_commit(sess_maker=self.sess_maker) as session:
-            f = crud.FetchLifecycle(session)
-            t = f.get_rolling_status(posts.M04["boot-info"]["mac"])
-            self.assertIsNone(t[0])
-            self.assertIsNone(t[1])
-            r = f.get_all_rolling_status()
-            self.assertEqual(1, len(r))
+        f = crud.FetchLifecycle(sess_maker=self.sess_maker)
+        t = f.get_rolling_status(posts.M04["boot-info"]["mac"])
+        self.assertIsNone(t[0])
+        self.assertIsNone(t[1])
+        r = f.get_all_rolling_status()
+        self.assertEqual(1, len(r))
 
     def test_39(self):
-        with session_commit(sess_maker=self.sess_maker) as session:
-            export = crud.BackupExport(session)
-            playbook = export.get_playbook()
-            self.assertEqual(10, len(playbook))
+        playbook = crud.BackupExport(sess_maker=self.sess_maker).get_playbook()
+        self.assertEqual(10, len(playbook))
         for i, entry in enumerate(playbook):
             if i % 2 == 0:
                 lastest = entry["data"]["boot-info"]["mac"]
