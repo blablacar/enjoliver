@@ -21,6 +21,7 @@ matrix:
       python: 3.6
       install:
         - pip install tox
+        - psql -c 'create database enjoliver_testing'
       script:
         - cd enjoliver-api && tox
     - language: go
