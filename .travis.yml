@@ -1,11 +1,19 @@
 os: linux
 sudo: required
 dist: trusty
+cache:
+  pip: true
 
 #addons:
 #  apt:
 #    packages:
 #      - python-tox
+
+services:
+  - postgresql
+
+addons:
+  postgresql: "9.4"
 
 matrix:
   include:
