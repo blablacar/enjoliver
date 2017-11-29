@@ -8,7 +8,7 @@ from enjoliver.db import session_commit
 from enjoliver.model import MachineInterface, Machine, MachineDisk, Chassis, ChassisPort
 
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class MachineDiscoveryRepository:

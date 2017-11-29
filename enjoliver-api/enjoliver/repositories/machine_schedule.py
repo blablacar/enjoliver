@@ -5,7 +5,7 @@ from sqlalchemy.orm import joinedload, sessionmaker
 from enjoliver.db import session_commit
 from enjoliver.model import Machine, Schedule, MachineInterface
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class MachineScheduleRepository:

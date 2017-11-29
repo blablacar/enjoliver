@@ -19,7 +19,6 @@ class CommonScheduler:
     """
     Base class to create profiles with deps
     """
-    __metaclass__ = abc.ABCMeta
     apply_deps_tries = EC.apply_deps_tries
     apply_deps_delay = EC.apply_deps_delay
 
@@ -42,7 +41,6 @@ class CommonScheduler:
             logger.error("fetch failed: %s" % query)
             return []
 
-    @abc.abstractmethod
     def apply(self):
         """
         Entrypoint to apply the schedule plan
@@ -51,6 +49,7 @@ class CommonScheduler:
         :return: True if it's a number require
             (3 members for Etcd), int number of effective apply (Etcd Proxy)
         """
+        raise NotImplementedError
 
     def apply_dep(self, dep_instance):
         logger.info("tries:%d delay:%d" % (self.apply_deps_tries, self.apply_deps_delay))
