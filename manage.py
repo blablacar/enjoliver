@@ -115,7 +115,7 @@ def plan(ctx):
     ec = configs.EnjoliverConfig(yaml_full_path=ctx.obj['CONFIGS'], importer=__file__)
     cmd = [
         'python',
-        "%s/plans/k8s_2t.py" % APP_PATH,
+        "%s/enjoliver/k8s_2t.py" % APP_PATH,
     ]
     click.echo("exec[%s] -> %s\n" % (os.getpid(), " ".join(cmd)))
     with open(ec.plan_pid_file, "w") as f:
