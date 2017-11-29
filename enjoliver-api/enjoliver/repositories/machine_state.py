@@ -6,7 +6,7 @@ from sqlalchemy.orm import joinedload, sessionmaker
 from enjoliver.db import session_commit
 from enjoliver.model import MachineCurrentState, MachineInterface
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class MachineStateRepository:

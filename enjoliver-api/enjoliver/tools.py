@@ -4,7 +4,7 @@ import time
 
 from enjoliver.configs import EnjoliverConfig
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 EC = EnjoliverConfig()
 
 
