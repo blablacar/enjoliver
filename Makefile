@@ -139,5 +139,4 @@ prod_setup:
 	$(MAKE) -C $(CWD) submodules
 	$(MAKE) -C $(CWD) prod_setup_runtime
 	$(MAKE) -C $(CWD) front
-	$(MAKE) -C $(CWD) pip
 
