@@ -38,9 +38,6 @@ apt:
 	test $(shell id -u -r) -eq 0
 	DEBIAN_FRONTEND=noninteractive INSTALL="-y" ./apt.sh
 
-$(VENV):
-	$(MAKE) -C $(VENV) venv
-
 acserver:
 	test $(shell id -u -r) -eq 0
 	$(MAKE) -C $(CWD)/runtime/ create_rack0
@@ -127,7 +124,6 @@ dev_setup:
 	su -m $(MY_USER) -c "make -C $(CWD) dev_setup_runtime"
 	su -m $(MY_USER) -c "make -C $(CWD)/app/tests testing.id_rsa"
 	su -m $(MY_USER) -c "make -C $(CWD) front"
-	su -m $(MY_USER) -c "make -C $(CWD) pip"
 	su -m $(MY_USER) -c "make -C $(CWD) assets"
 	$(MAKE) -C $(CWD) aci
 	$(MAKE) -C $(CWD) container_linux
@@ -139,5 +135,4 @@ prod_setup:
 	$(MAKE) -C $(CWD) submodules
 	$(MAKE) -C $(CWD) prod_setup_runtime
 	$(MAKE) -C $(CWD) front
-	$(MAKE) -C $(CWD) pip
 

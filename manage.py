@@ -1,29 +1,57 @@
 #!/usr/bin/env python3
-import argparse
 import multiprocessing
 import os
 import signal
+import sys
+
+import click
 from sqlalchemy import create_engine
 
-from enjoliver import configs, gunicorn_conf
-from enjoliver.model import Base
+try:
+    from enjoliver import configs, gunicorn_conf
+    from enjoliver.model import Base
+except ModuleNotFoundError:
+    click.echo('please install enjoliver first: cd enjoliver-api && pip install -e .')
+    sys.exit(255)
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 APP_PATH = os.path.join(PROJECT_PATH, "enjoliver-api")
 
 
-def init_db(ec):
-    print("initializing db")
+def _fs_gunicorn_cleaning(ec):
+    for directory in [ec.prometheus_multiproc_dir, ec.werkzeug_fs_cache_dir]:
+        click.echo("cleaning %s" % directory)
+        try:
+            for item in os.listdir(directory):
+                os.remove(os.path.join(directory, item))
+        except FileNotFoundError:
+            os.makedirs(directory)
+
+
+def _init_db(ec):
+    click.echo("initializing db")
     engine = create_engine(ec.db_uri)
     Base.metadata.create_all(bind=engine)
 
 
-def init_journal_dir(ec):
+def _init_journal_dir(ec):
     if not os.path.exists(ec.ignition_journal_dir):
         os.makedirs(ec.ignition_journal_dir)
 
 
-def gunicorn(ec):
+@click.group()
+@click.option('--configs', '-c', default="%s/enjoliver/configs.yaml" % APP_PATH, help="Choose the yaml config file")
+@click.pass_context
+def manage(ctx, configs):
+    ctx.obj['CONFIGS'] = configs
+
+
+@manage.command()
+@click.pass_context
+def gunicorn(ctx):
+    ec = configs.EnjoliverConfig(yaml_full_path=ctx.obj['CONFIGS'], importer=__file__)
+    _init_db(ec)
+    _init_journal_dir(ec)
     cmd = [
         "gunicorn",
         "--chdir",
@@ -42,35 +70,28 @@ def gunicorn(ec):
     ]
     if not os.getenv('prometheus_multiproc_dir', None):
         os.environ["prometheus_multiproc_dir"] = ec.prometheus_multiproc_dir
-    fs_gunicorn_cleaning()
+    _fs_gunicorn_cleaning(ec)
 
     p = multiprocessing.Process(target=lambda: os.execvpe(cmd[0], cmd, os.environ))
 
     def stop(signum, frame):
-        print("terminating %d" % p.pid)
+        click.echo("terminating %d" % p.pid)
         p.terminate()
 
-    print("starting gunicorn: %s" % " ".join(cmd))
+    click.echo("starting gunicorn: %s" % " ".join(cmd))
     p.start()
     with open(ec.gunicorn_pid_file, "w") as f:
         f.write("%d" % p.pid)
     for sig in [signal.SIGINT, signal.SIGTERM]:
         signal.signal(sig, stop)
     p.join()
-    fs_gunicorn_cleaning()
+    _fs_gunicorn_cleaning(ec)
 
 
-def fs_gunicorn_cleaning():
-    for directory in [ec.prometheus_multiproc_dir, ec.werkzeug_fs_cache_dir]:
-        print("cleaning %s" % directory)
-        try:
-            for item in os.listdir(directory):
-                os.remove(os.path.join(directory, item))
-        except FileNotFoundError:
-            os.makedirs(directory)
-
-
-def matchbox(ec):
+@manage.command()
+@click.pass_context
+def matchbox(ctx):
+    ec = configs.EnjoliverConfig(yaml_full_path=ctx.obj['CONFIGS'], importer=__file__)
     cmd = [
         "%s/runtime/matchbox/matchbox" % PROJECT_PATH,
         "-address",
@@ -82,57 +103,43 @@ def matchbox(ec):
         "-log-level",
         ec.matchbox_logging_level.lower(),
     ]
-    print("exec[%s] -> %s\n" % (os.getpid(), " ".join(cmd)))
+    click.echo("exec[%s] -> %s\n" % (os.getpid(), " ".join(cmd)))
     with open(ec.matchbox_pid_file, "w") as f:
         f.write("%d" % os.getpid())
     os.execve(cmd[0], cmd, os.environ)
 
 
-def plan(ec):
+@manage.command()
+@click.pass_context
+def plan(ctx):
+    ec = configs.EnjoliverConfig(yaml_full_path=ctx.obj['CONFIGS'], importer=__file__)
     cmd = [
         'python',
         "%s/plans/k8s_2t.py" % APP_PATH,
     ]
-    print("exec[%s] -> %s\n" % (os.getpid(), " ".join(cmd)))
+    click.echo("exec[%s] -> %s\n" % (os.getpid(), " ".join(cmd)))
     with open(ec.plan_pid_file, "w") as f:
         f.write("%d" % os.getpid())
     os.execvpe(cmd[0], cmd, os.environ)
 
 
+@manage.command()
 def validate():
     cmd = [
         'python',
         "%s/validate.py" % PROJECT_PATH,
     ]
-    print("exec[%s] -> %s\n" % (os.getpid(), " ".join(cmd)))
+    click.echo("exec[%s] -> %s\n" % (os.getpid(), " ".join(cmd)))
     os.execvpe(cmd[0], cmd, os.environ)
 
 
-def show_configs(ec):
+@manage.command('show-configs')
+@click.pass_context
+def show_configs(ctx):
+    ec = configs.EnjoliverConfig(yaml_full_path=ctx.obj['CONFIGS'], importer=__file__)
     for k, v in ec.__dict__.items():
-        print("%s=%s" % (k, v))
+        click.echo("%s=%s" % (k, v))
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(prog='Enjoliver')
-    parser.add_argument('task', type=str, choices=["gunicorn", "plan", "matchbox", "show-configs", "validate"],
-                        help="Choose the task to run")
-    parser.add_argument('--configs', type=str, default="%s/enjoliver/configs.yaml" % APP_PATH,
-                        help="Choose the yaml config file")
-    task = parser.parse_args().task
-    f = parser.parse_args().configs
-    ec = configs.EnjoliverConfig(yaml_full_path=f, importer=__file__)
-    if task == "gunicorn":
-        init_db(ec)
-        init_journal_dir(ec)
-        gunicorn(ec)
-    elif task == "plan":
-        plan(ec)
-    elif task == "matchbox":
-        matchbox(ec)
-    elif task == "show-configs":
-        show_configs(ec)
-    elif task == "validate":
-        validate()
-    else:
-        raise AttributeError("%s not a choice" % task)
+    manage(obj={})
