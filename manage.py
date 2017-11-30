@@ -40,16 +40,13 @@ def _init_journal_dir(ec):
 
 
 @click.group()
-@click.option('--configs', '-c', default="%s/enjoliver/configs.yaml" % APP_PATH, help="Choose the yaml config file")
-@click.pass_context
-def manage(ctx, configs):
-    ctx.obj['CONFIGS'] = configs
+def manage():
+    pass
 
 
 @manage.command()
-@click.pass_context
-def gunicorn(ctx):
-    ec = configs.EnjoliverConfig(yaml_full_path=ctx.obj['CONFIGS'], importer=__file__)
+def gunicorn():
+    ec = configs.EnjoliverConfig(importer=__file__)
     _init_db(ec)
     _init_journal_dir(ec)
     cmd = [
@@ -89,9 +86,8 @@ def gunicorn(ctx):
 
 
 @manage.command()
-@click.pass_context
-def matchbox(ctx):
-    ec = configs.EnjoliverConfig(yaml_full_path=ctx.obj['CONFIGS'], importer=__file__)
+def matchbox():
+    ec = configs.EnjoliverConfig(importer=__file__)
     cmd = [
         "%s/runtime/matchbox/matchbox" % PROJECT_PATH,
         "-address",
@@ -110,9 +106,8 @@ def matchbox(ctx):
 
 
 @manage.command()
-@click.pass_context
-def plan(ctx):
-    ec = configs.EnjoliverConfig(yaml_full_path=ctx.obj['CONFIGS'], importer=__file__)
+def plan():
+    ec = configs.EnjoliverConfig(importer=__file__)
     cmd = [
         'python',
         "%s/enjoliver/k8s_2t.py" % APP_PATH,
@@ -134,9 +129,8 @@ def validate():
 
 
 @manage.command('show-configs')
-@click.pass_context
-def show_configs(ctx):
-    ec = configs.EnjoliverConfig(yaml_full_path=ctx.obj['CONFIGS'], importer=__file__)
+def show_configs():
+    ec = configs.EnjoliverConfig(importer=__file__)
     for k, v in ec.__dict__.items():
         click.echo("%s=%s" % (k, v))
 

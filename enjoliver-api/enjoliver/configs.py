@@ -5,10 +5,6 @@ import os
 import logging
 import yaml
 
-import click
-
-APP_PATH = os.path.dirname(os.path.abspath(__file__))
-PROJECT_PATH = os.path.dirname(APP_PATH)
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +39,10 @@ class EnjoliverConfig:
             self.default[key] = default
             return default
 
-    def __init__(self, yaml_full_path=os.getenv("ENJOLIVER_CONFIGS_YAML",
-                                                "%s/configs.yaml" % APP_PATH), importer=""):
+    def __init__(self, importer=''):
+        assert 'ENJOLIVER_CONFIG' in os.environ
+        yaml_full_path = os.environ['ENJOLIVER_CONFIG']
+
         with open(yaml_full_path) as yaml_fd:
             self.from_yaml = yaml.load(yaml_fd)
 
@@ -61,7 +59,8 @@ class EnjoliverConfig:
 
         # Bootcfg aka CoreOS Baremetal aka Matchbox
         self.matchbox_uri = self.config_override("matchbox_uri", "http://127.0.0.1:8080")
-        self.matchbox_path = self.config_override("matchbox_path", "%s/matchbox" % PROJECT_PATH)
+        # self.matchbox_path = self.config_override("matchbox_path", "%s/matchbox" % PROJECT_PATH)
+        self.matchbox_path = self.config_override("matchbox_path", "%s/matchbox" % '/usr/local/')
         self.matchbox_assets = self.config_override("matchbox_assets", "%s/assets" % self.matchbox_path)
         # For Health check
         self.matchbox_urls = self.config_override("matchbox_urls", [
@@ -221,7 +220,7 @@ class EnjoliverConfig:
         return self.__dict__.items()
 
 
-if __name__ == '__main__':
-    EC = EnjoliverConfig("%s/configs.yaml" % os.path.dirname(__file__))
-    for k, v in EC.items():
-        click.echo('{}: {}'.format(k, v))
+# if __name__ == '__main__':
+#     EC = EnjoliverConfig("%s/configs.yaml" % os.path.dirname(__file__))
+#     for k, v in EC.items():
+#         click.echo('{}: {}'.format(k, v))
