@@ -20,7 +20,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            pip install tox
+            sudo pip install tox
       - save_cache:
           paths:
             - enjoliver-api/.tox/py36
