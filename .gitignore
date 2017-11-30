@@ -17,6 +17,8 @@
 /ectl/ectl
 /enjoliver-agent/enjoliver-agent
 /enjoliver-api/.tox/
+/enjoliver-api/build/
+/enjoliver-api/dist/
 /enjoliver-api/enjoliver/ignition_journal/
 /enjoliver-api/enjoliver/prometheus_multiproc_dir
 /enjoliver-api/enjoliver/werkzeug_cache/
