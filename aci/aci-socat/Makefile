@@ -26,6 +26,7 @@ $(BUILDER_HYPERKUBE): $(GO)
 	@echo ENV IMAGE=$(ACI)/aci-$(BUILDER_HYPERKUBE)
 	IMAGE=$(ACI)/aci-$(BUILDER_HYPERKUBE) make -C $(RUNTIME) install
 	IMAGE=$(ACI)/aci-$(DEBIAN) make -C $(RUNTIME) push
+	IMAGE=$(ACI)/aci-$(BUILDER_HYPERKUBE) make -C $(RUNTIME) push
 
 build: $(BUILDER_HYPERKUBE)
 	@echo ENV IMAGE=$(ACI)/aci-$(SOCAT)
