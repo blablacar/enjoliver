@@ -3,20 +3,21 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/golang/glog"
-	"github.com/olekukonko/tablewriter"
 	"os"
 	"sort"
+
+	"github.com/golang/glog"
+	"github.com/olekukonko/tablewriter"
 )
 
 const (
 	AgentBinaryVersionPath = "/version"
 )
 
-var eltInRowForBinaryVersion = []string{"Fqdn", "Distribution", "Etcd", "Fleetd", "Hyperkube", "Iproute2", "haproxy", "Rkt", "Systemd", "Kernel", "Vault"}
+var eltInRowForBinaryVersion = []string{"Fqdn", "Distribution", "Etcd", "Fleetd", "Hyperkube", "Iproute2", "haproxy", "Rkt", "Systemd", "Kernel", "Vault", "Socat"}
 
 type BinaryVersion struct {
-	Distribution, Etcd, Fleet, Hyperkube, Ip, HaProxy, Rkt, Systemctl, Uname, Vault string
+	Distribution, Etcd, Fleet, Hyperkube, Ip, HaProxy, Rkt, Systemctl, Uname, Vault, Socat string
 }
 
 type AgentBinaryVersion struct {
@@ -106,6 +107,7 @@ func (r *Runtime) createRowForBinaryVersion(node AgentBinaryVersion) []string {
 		node.BinaryVersion.Systemctl,
 		node.BinaryVersion.Uname,
 		node.BinaryVersion.Vault,
+		node.BinaryVersion.Socat,
 	} {
 		row = append(row, r)
 	}

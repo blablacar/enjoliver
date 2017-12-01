@@ -1,0 +1,11 @@
+name: enjoliver.local/socat:1.7.3.2
+
+builder:
+  dependencies:
+    - enjoliver.local/builder-hyperkube:latest
+
+aci:
+  dependencies:
+    - enjoliver.local/debian:latest
+  app:
+    exec: ["/usr/bin/socat"]

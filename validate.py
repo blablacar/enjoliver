@@ -125,6 +125,10 @@ class TestValidateAcserverStorage(unittest.TestCase):
         list_dir = os.listdir(os.path.join(self.acserver_d, "haproxy"))
         self.assertEqual(1, len(list_dir))
 
+    def test_socat(self):
+        list_dir = os.listdir(os.path.join(self.acserver_d, "socat"))
+        self.assertEqual(1, len(list_dir))
+
 
 class TestValidateRuntime(unittest.TestCase):
     cwd = os.path.dirname(os.path.abspath(__file__))

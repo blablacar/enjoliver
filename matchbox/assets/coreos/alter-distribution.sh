@@ -127,6 +127,10 @@ cp -v ${ASSETS_DIRECTORY}/discoveryC/serve/discoveryC squashfs-root/bin
 cp -v ${ASSETS_DIRECTORY}/discoveryC/serve/discoveryC ${USR_A}/bin
 _upx_in_fs /bin/discoveryC
 
+SOCAT_ACI=$(ls ${ACI_PATH}/socat/socat-*-linux-amd64.aci | head -n 1)
+tar -C squashfs-root -xvf ${SOCAT_ACI} rootfs/usr/bin --strip 2 ${EXCLUDES}
+tar -C ${USR_A} -xvf ${SOCAT_ACI} rootfs/usr/bin --strip 2 ${EXCLUDES}
+
 for b in /bin/locksmithctl /bin/coreos-cloudinit
 do
     _upx_in_fs ${b}
