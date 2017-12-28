@@ -1,4 +1,4 @@
-# Enjoliver 
+# Enjoliver
 
 Travis-ci (com / org)
 
@@ -41,12 +41,12 @@ Each node can be re-installed and re-join the cluster.
     * Vault UI
     * CronJobs for etcd3 backups
 
-## 1. Kubernetes Cluster 
+## 1. Kubernetes Cluster
 
 ![cp](docs/topology.jpg)
 
 Kubernetes controller manager is deployed as *Pod* on each nodes of the control plane.
-When the control plane runs the controller, the scheduler starts as a DaemonSet.  
+When the control plane runs the controller, the scheduler starts as a DaemonSet.
 
 Vault, Kubernetes and Fleet have dedicated etcd clusters.
 
@@ -59,7 +59,7 @@ Vault pki backend secure the following components:
     * peer
     * client
 * kube-apiserver
-    * x509 authentication for kubectl  
+    * x509 authentication for kubectl
     * service accounts
 * kube-controller-manager
     * cluster signing key
@@ -73,7 +73,7 @@ The configuration of each host is managed by Ignition.
 
 #### Upstream
 
-* [etcd](https://github.com/coreos/etcd/releases)	
+* [etcd](https://github.com/coreos/etcd/releases)
 * [cni](https://github.com/containernetworking/cni/releases)
 * [rkt](https://github.com/rkt/rkt/releases)
 * [kubernetes](https://github.com/kubernetes/kubernetes/releases)
@@ -102,7 +102,7 @@ Enjoliver use 3 profiles in matchbox
 ##### Discovery
 
 The discovery allows to boot in memory CoreOS instances to proceed of:
- 
+
 1) sending the facts of the machine (MAC address, IP address, ...)
 2) fetch his role
 3) disk installation
@@ -177,48 +177,48 @@ Everything has to go through this endpoint.
 This is the available routes:
 
     [
-      "/", 
-      "/apidocs/", 
-      "/apidocs/index.html", 
-      "/apispec_1.json", 
-      "/assets", 
-      "/assets/<path:path>", 
-      "/backup/db", 
-      "/backup/export", 
-      "/boot.ipxe", 
-      "/boot.ipxe.0", 
-      "/config", 
-      "/configs", 
-      "/discovery", 
-      "/discovery/ignition-journal", 
-      "/discovery/ignition-journal/<string:uuid>", 
-      "/discovery/ignition-journal/<string:uuid>/<string:boot_id>", 
-      "/discovery/interfaces", 
-      "/flasgger_static/<path:filename>", 
-      "/healthz", 
-      "/ignition", 
-      "/ignition-pxe", 
-      "/ignition/version", 
-      "/ignition/version/<string:filename>", 
-      "/install-authorization/<string:request_raw_query>", 
-      "/ipxe", 
-      "/lifecycle/coreos-install", 
-      "/lifecycle/coreos-install/<string:status>/<string:request_raw_query>", 
-      "/lifecycle/ignition", 
-      "/lifecycle/ignition/<string:request_raw_query>", 
-      "/lifecycle/rolling", 
-      "/lifecycle/rolling/<string:request_raw_query>", 
-      "/metadata", 
-      "/metrics", 
-      "/scheduler", 
-      "/scheduler/<string:role>", 
-      "/scheduler/available", 
-      "/scheduler/ip-list/<string:role>", 
-      "/shutdown", 
-      "/static/<path:filename>", 
-      "/sync-notify", 
-      "/ui", 
-      "/ui/view/machine", 
+      "/",
+      "/apidocs/",
+      "/apidocs/index.html",
+      "/apispec_1.json",
+      "/assets",
+      "/assets/<path:path>",
+      "/backup/db",
+      "/backup/export",
+      "/boot.ipxe",
+      "/boot.ipxe.0",
+      "/config",
+      "/configs",
+      "/discovery",
+      "/discovery/ignition-journal",
+      "/discovery/ignition-journal/<string:uuid>",
+      "/discovery/ignition-journal/<string:uuid>/<string:boot_id>",
+      "/discovery/interfaces",
+      "/flasgger_static/<path:filename>",
+      "/healthz",
+      "/ignition",
+      "/ignition-pxe",
+      "/ignition/version",
+      "/ignition/version/<string:filename>",
+      "/install-authorization/<string:request_raw_query>",
+      "/ipxe",
+      "/lifecycle/coreos-install",
+      "/lifecycle/coreos-install/<string:status>/<string:request_raw_query>",
+      "/lifecycle/ignition",
+      "/lifecycle/ignition/<string:request_raw_query>",
+      "/lifecycle/rolling",
+      "/lifecycle/rolling/<string:request_raw_query>",
+      "/metadata",
+      "/metrics",
+      "/scheduler",
+      "/scheduler/<string:role>",
+      "/scheduler/available",
+      "/scheduler/ip-list/<string:role>",
+      "/shutdown",
+      "/static/<path:filename>",
+      "/sync-notify",
+      "/ui",
+      "/ui/view/machine",
       "/ui/view/states"
     ]
 
@@ -252,7 +252,7 @@ You can take as example the `aci/aci-enjoliver` to see how the rkt container is 
 Fulfill the configuration file `app/configs.yaml`
 
 About the aci, you need pass all the `dgr test` or adapt the ignition files.
- 
+
 ### Development - Local KVM
 
 This part will soon have a better documentation.
@@ -269,46 +269,45 @@ All in one dev setup:
 
     # Clone the project inside a valid GOPATH
     git clone https://github.com/blablacar/enjoliver.git ${GOPATH}/src/github.com/blablacar/enjoliver
-    
+
     # Be sure the GOPATH is fowarded across Makefiles or do it step by step
     sudo -E make dev_setup
-    
+
 Step-by-step:
 
     make submodules
     make -C runtime dev_setup
-    make -C app/tests testing.id_rsa
+    make -C tests testing.id_rsa
     make front
-    make pip
     make -C matchbox/assets/discoveryC
     make -C matchbox/assets/enjoliver-agent
-    
+
     # Very long:
     sudo -E make aci
     sudo -E make container_linux
-    
+
     # misc
     make config
     sudo -E chown -R ${SUDO_USER}: $(CWD)
-    
+
     # Validate
     make validate
-    
-        
-    
+
+
+
 Start an interactive Kubernetes deployment of 2 nodes:
 
-    
+
     # Start the deployment
     sudo make -C app/tests check_euid_it_plans_enjolivage_disk_2_nodes
 
 
 The enjoliver API is available on `127.0.0.1:5000`, the user interface is behind the `/ui`
 
-    
+
 At the end of the setup, a kubectl proxy is running on `127.0.0.1:8001`
- 
- 
+
+
     Starting to serve on 127.0.0.1:8001
     #####################################
     mkdir -pv ~/.kube
@@ -322,7 +321,7 @@ At the end of the setup, a kubectl proxy is running on `127.0.0.1:8001`
     - context:
         cluster: enjoliver
         namespace: default
-        user: 
+        user:
       name: e
     current-context: e
     kind: Config
