@@ -8,7 +8,8 @@ ACI=$(PROJECT)/aci
 
 DEBIAN=debian
 FLEET=fleet
-
+BUILDER_HYPERKUBE=builder-hyperkube
+GO=go
 
 default: push
 
@@ -17,7 +18,22 @@ $(DEBIAN):
 	IMAGE=$(ACI)/aci-$(DEBIAN) make -C $(RUNTIME) install
 	IMAGE=$(ACI)/aci-$(DEBIAN) make -C $(RUNTIME) push
 
-test: $(DEBIAN)
+$(GO): $(DEBIAN)
+	@echo ENV IMAGE=$(ACI)/aci-$(GO)
+	IMAGE=$(ACI)/aci-$(GO) make -C $(RUNTIME) install
+	IMAGE=$(ACI)/aci-$(GO) make -C $(RUNTIME) push
+
+$(BUILDER_HYPERKUBE): $(GO)
+	@echo ENV IMAGE=$(ACI)/aci-$(BUILDER_HYPERKUBE)
+	IMAGE=$(ACI)/aci-$(BUILDER_HYPERKUBE) make -C $(RUNTIME) install
+	IMAGE=$(ACI)/aci-$(DEBIAN) make -C $(RUNTIME) push
+	IMAGE=$(ACI)/aci-$(BUILDER_HYPERKUBE) make -C $(RUNTIME) push
+
+build: $(BUILDER_HYPERKUBE)
+	@echo ENV IMAGE=$(ACI)/aci-$(FLEET)
+	IMAGE=$(ACI)/aci-$(FLEET) make -C $(RUNTIME) build
+
+test: build
 	@echo ENV IMAGE=$(ACI)/aci-$(FLEET)
 	IMAGE=$(ACI)/aci-$(FLEET) make -C $(RUNTIME) test
 
