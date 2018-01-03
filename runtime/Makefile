@@ -7,6 +7,11 @@ ifeq ($(UNAME), Darwin)
 GO_ARCH=darwin-amd64
 endif
 
+
+ifeq ($(V), 1)
+DGR_FLAGS="-Ldebug"
+endif
+
 # DGR
 DGR_VERSION=v86
 DGR_GITHUB_DOWNLOAD=https://github.com/blablacar/dgr/releases/download
@@ -113,7 +118,7 @@ build: $(DGR) $(RKT)
 
 install: $(DGR) $(RKT)
 	@test $(IMAGE)
-	@$(DGR) -H $(CWD) install -W $(IMAGE)
+	$(DGR) $(DGR_FLAGS) -H $(CWD) install -W $(IMAGE)
 
 push: $(DGR) $(RKT)
 	@test $(IMAGE)
