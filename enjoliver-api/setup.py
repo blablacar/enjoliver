@@ -26,6 +26,6 @@ setup(
         'psycopg2',
         'requests',
         'sqlalchemy',
-        'werkzeug',
+        'werkzeug<0.13',
     ],
 )
