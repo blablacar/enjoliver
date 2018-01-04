@@ -15,7 +15,7 @@ import time
 import yaml
 from kubernetes import client as kubeclient
 
-from app import generator, configs
+from enjoliver import generator, configs
 
 
 def is_virtinstall():
@@ -86,8 +86,7 @@ class KernelVirtualMachinePlayer(unittest.TestCase):
 
     euid_path = "%s" % os.path.dirname(os.path.abspath(__file__))
     tests_path = "%s" % os.path.dirname(euid_path)
-    app_path = os.path.dirname(tests_path)
-    project_path = os.path.dirname(app_path)
+    project_path = os.path.dirname(tests_path)
     matchbox_path = "%s/matchbox" % project_path
     assets_path = "%s/matchbox/assets" % project_path
 

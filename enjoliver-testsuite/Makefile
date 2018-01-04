@@ -14,19 +14,13 @@ PROJECT=$(CWD)/../..
 RUNTIME=$(PROJECT)/runtime
 RKT=$(RUNTIME)/rkt/rkt
 
-VENV=venv
-PYTHON=$(PROJECT)/$(VENV)/bin/python3
+PYTHON=python3
 
 TESTING_RSA=testing.id_rsa
 
-pip: venv
-	$(MAKE) -C $(PROJECT)/$(VENV) $@
 
-venv:
-	$(MAKE) -C $(PROJECT)/$(VENV) $@
-
-check: pip
-	PATH=$(PROJECT)/env/bin:$(PATH) PYTHONPATH=$(PROJECT) $(PYTHON) -m unittest discover ./
+check:
+	PYTHONPATH=$(PROJECT) $(PYTHON) -m unittest discover ./
 
 
 runtime: $(TESTING_RSA)
@@ -68,61 +62,61 @@ clean:
 
 fclean: clean gci gc
 
-check_euid_fail_fast: $(PYTHON) runtime
+check_euid_fail_fast: runtime
 	PYTHONPATH=$(shell pwd)/../.. $(PYTHON) -m unittest discover euid/ -f
 
-check_euid: $(PYTHON) runtime
+check_euid: runtime
 	PYTHONPATH=$(shell pwd)/../.. $(PYTHON) -m unittest discover euid/
 
-check_euid_discovery: $(PYTHON) runtime
+check_euid_discovery: runtime
 	PYTHONPATH=$(shell pwd)/../.. $(PYTHON) -m unittest discover euid/discovery/
 
-check_euid_discovery_client: $(PYTHON) runtime
+check_euid_discovery_client: runtime
 	PYTHONPATH=$(shell pwd)/../.. $(PYTHON) euid/discovery/test_kvm_discovery_client.py
 
-check_euid_k8s_basic: $(PYTHON) runtime
+check_euid_k8s_basic: runtime
 	PYTHONPATH=$(shell pwd)/../.. $(PYTHON) euid/k8s/test_kvm_k8s_basic.py
 
-check_euid_k8s_fast: $(PYTHON) runtime
+check_euid_k8s_fast: runtime
 	PYTHONPATH=$(shell pwd)/../.. $(PYTHON) euid/k8s/test_kvm_k8s_fast.py
 
-check_euid_it_k8s_fast: $(PYTHON) runtime
+check_euid_it_k8s_fast: runtime
 	PYTHONPATH=$(shell pwd)/../.. TEST=TestKVMK8SFast0 $(PYTHON) euid/k8s/test_kvm_k8s_fast.py
 
-check_euid_k8s_etcd_operator: $(PYTHON) runtime
+check_euid_k8s_etcd_operator: runtime
 	PYTHONPATH=$(shell pwd)/../.. $(PYTHON) euid/k8s/test_kvm_k8s_etcd_operator.py
 
-check_euid_it_k8s_etcd_operator: $(PYTHON) runtime
+check_euid_it_k8s_etcd_operator: runtime
 	PYTHONPATH=$(shell pwd)/../.. TEST=TestKVMK8SEtcdOperator0 $(PYTHON) euid/k8s/test_kvm_k8s_etcd_operator.py
 
-check_euid_basic: $(PYTHON) runtime
+check_euid_basic: runtime
 	PYTHONPATH=$(shell pwd)/../.. $(PYTHON) -m unittest discover euid/basic/
 
 check_euid_basic_iso: $(PYTHON) $(ISO) runtime
 	KVM_ISO=run PYTHONPATH=$(shell pwd)/../.. $(PYTHON) euid/basic/test_kvm_basic_iso.py
 
-check_euid_basic_pxe: $(PYTHON) runtime
+check_euid_basic_pxe: runtime
 	PYTHONPATH=$(shell pwd)/../.. $(PYTHON) euid/basic/test_kvm_basic_pxe.py
 
-check_euid_plans_enjolivage: $(PYTHON) runtime
+check_euid_plans_enjolivage: runtime
 	PYTHONPATH=$(shell pwd)/../.. $(PYTHON) euid/plans/test_kvm_plan_k8s_enjolivage.py
 
-check_euid_it_plans_enjolivage: $(PYTHON) runtime
+check_euid_it_plans_enjolivage: runtime
 	PYTHONPATH=$(shell pwd)/../.. TEST=TestKVMK8sEnjolivage0 $(PYTHON) euid/plans/test_kvm_plan_k8s_enjolivage.py
 
-check_euid_it_plans_enjolivage_disk_4_nodes: $(PYTHON) runtime
+check_euid_it_plans_enjolivage_disk_4_nodes: runtime
 	PYTHONPATH=$(shell pwd)/../.. DISK_OK=yes TEST=TestKVMK8sEnjolivageDisk0 $(PYTHON) euid/plans/test_kvm_plan_k8s_enjolivage_disk.py
 
-check_euid_it_plans_enjolivage_disk_2_nodes: $(PYTHON) runtime
+check_euid_it_plans_enjolivage_disk_2_nodes: runtime
 	PYTHONPATH=$(shell pwd)/../.. DISK_OK=yes TEST=TestKVMK8sEnjolivageDisk1 $(PYTHON) euid/plans/test_kvm_plan_k8s_enjolivage_disk.py
 
-check_euid_plans_enjolivage_disk: $(PYTHON) runtime
+check_euid_plans_enjolivage_disk: runtime
 	PYTHONPATH=$(shell pwd)/../.. DISK_OK=yes $(PYTHON) euid/plans/test_kvm_plan_k8s_enjolivage_disk.py
 
-check_euid_plans_enjolivage_disk_lifecycle: $(PYTHON) runtime
+check_euid_plans_enjolivage_disk_lifecycle: runtime
 	PYTHONPATH=$(shell pwd)/../.. DISK_OK=yes $(PYTHON) euid/plans/test_kvm_plan_k8s_enjolivage_disk_lifecycle.py
 
-check_euid_kvm_player: $(PYTHON) runtime
+check_euid_kvm_player: runtime
 	PYTHONPATH=$(shell pwd)/../.. $(PYTHON) euid/test_kvm_player.py
 
 $(KKK):

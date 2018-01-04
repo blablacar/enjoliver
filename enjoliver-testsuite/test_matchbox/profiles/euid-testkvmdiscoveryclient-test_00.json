@@ -1,0 +1,18 @@
+{
+  "boot": {
+    "cmdline": {
+      "console": "ttyS0 console=ttyS1",
+      "coreos.config.url": "http://172.20.0.1:5000/ignition?uuid=${uuid}&mac=${net0/mac:hexhyp}",
+      "coreos.first_boot": "",
+      "coreos.oem.id": "pxe"
+    },
+    "initrd": [
+      "http://172.20.0.1:5000/assets/coreos/serve/coreos_production_pxe_image.cpio.gz"
+    ],
+    "kernel": "http://172.20.0.1:5000/assets/coreos/serve/coreos_production_pxe.vmlinuz"
+  },
+  "cloud_id": "",
+  "id": "euid-testkvmdiscoveryclient-test_00",
+  "ignition_id": "euid-testkvmdiscoveryclient-test_00.yaml",
+  "name": "euid-testkvmdiscoveryclient-test_00"
+}

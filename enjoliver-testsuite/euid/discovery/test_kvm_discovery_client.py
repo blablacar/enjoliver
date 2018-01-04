@@ -3,7 +3,7 @@ import sys
 import time
 import unittest
 
-from app import generator
+from enjoliver import generator
 
 try:
     import kvm_player
@@ -23,7 +23,6 @@ class TestKVMDiscoveryClient(kvm_player.KernelVirtualMachinePlayer):
         cls.pause(cls.wait_setup_teardown)
 
 
-# @unittest.skip("just skip")
 class TestKVMDiscoveryClient00(TestKVMDiscoveryClient):
     """
     node_nb: 1

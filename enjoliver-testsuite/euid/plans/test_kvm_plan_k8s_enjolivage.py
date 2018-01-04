@@ -5,7 +5,7 @@ import os
 import sys
 import time
 
-from app.plans import k8s_2t
+from enjoliver import k8s_2t
 
 try:
     import kvm_player
