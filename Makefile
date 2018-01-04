@@ -2,11 +2,10 @@ CWD=$(shell pwd)
 CHECK=check
 CHECK_EUID=check_euid
 CHECK_EUID_KVM_PLAYER=check_euid_kvm_player
-VENV=venv
 SHELL=bash
 MY_USER=${SUDO_USER}
 
-.PHONY: $(VENV)
+.PHONY:
 
 default: help
 
@@ -70,7 +69,6 @@ check_clean:
 	$(MAKE) -C app/tests/ fclean
 
 clean: clean_after_assets check_clean
-	$(MAKE) -C $(VENV) clean
 	rm -Rf runtime/acserver.d/*
 	rm -Rf runtime/target/*
 
@@ -90,8 +88,8 @@ $(CHECK_EUID_KVM_PLAYER):
 submodules:
 	git submodule update --init --recursive
 
-validate: $(VENV)
-	$(VENV)/bin/python3 validate.py
+validate:
+	ENJOLIVER_CONFIG=./enjoliver-api/enjoliver.yaml python3 validate.py
 
 dev_setup_runtime: submodules
 	$(MAKE) -C runtime dev_setup
