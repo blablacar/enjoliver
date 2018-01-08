@@ -6,10 +6,12 @@ RKT=$(RUNTIME)/rkt/rkt
 ACI=$(PROJECT)/aci
 
 
-DEBIAN=debian
 FLEET=fleet
-BUILDER_HYPERKUBE=builder-hyperkube
+DEBIAN=debian
 GO=go
+UPX=upx
+BUILDER_HYPERKUBE=builder-hyperkube
+HYPERKUBE=hyperkube
 
 default: push
 
