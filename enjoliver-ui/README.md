@@ -18,4 +18,4 @@ npm run build
 npm run build --report
 ```
 
-Build will automatically copy production ready files to app/templates and app/static directories.  
+Build will automatically copy production ready files to enjoliver-api/templates and enjoliver-api/static directories.  
