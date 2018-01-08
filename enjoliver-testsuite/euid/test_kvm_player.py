@@ -45,13 +45,3 @@ class TestKernelVirtualMachinePlayer(kvm_player.KernelVirtualMachinePlayer):
         finally:
             self.virsh(destroy)
             self.virsh(undefine)
-
-
-# This have to raise
-# class TestKernelVirtualMachinePlayerRaise(kvm_player.KernelVirtualMachinePlayer):
-#     def test(self):
-#         pass
-
-
-if __name__ == '__main__':
-    unittest.main()
