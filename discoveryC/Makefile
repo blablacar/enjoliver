@@ -9,7 +9,8 @@ check:
 	$(CC) test -v ./
 
 $(TARGET):
-	CGO_ENABLED=0 GOOS=linux $(CC) build $(FLAGS) -o $(TARGET)
+	#CGO_ENABLED=0 GOOS=linux $(CC) build $(FLAGS) -o $(TARGET)
+	$(CC) build $(FLAGS) -o $(TARGET)
 
 run: $(TARGET)
 	./$(TARGET)
@@ -21,6 +22,6 @@ restore: $(GODEP)
 	godep restore
 
 clean:
-	rm -v $(TARGET) || true
+	$(RM) $(TARGET)
 
 re: clean $(TARGET)

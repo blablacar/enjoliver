@@ -19,14 +19,8 @@ kube_deps_only: $(KUBE)
 extra: $(EXTRA)
 extra_deps: kube_deps $(EXTRA)
 
-$(CORE):
-	IMAGE=aci-$@ make -C aci-$@
-	IMAGE=aci-$@ make -C aci-$@ clean
-
+$(EXTRA)\
+$(CORE)\
 $(KUBE):
-	IMAGE=aci-$@ make -C aci-$@
-	IMAGE=aci-$@ make -C aci-$@ clean
-
-$(EXTRA):
-	IMAGE=aci-$@ make -C aci-$@
-	IMAGE=aci-$@ make -C aci-$@ clean
+	IMAGE=aci-$@ $(MAKE) -C aci-$@
+	IMAGE=aci-$@ $(MAKE) -C aci-$@ clean

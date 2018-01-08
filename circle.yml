@@ -1,8 +1,0 @@
-dependencies:
-  override:
-    - sudo apt-get update -qq
-    - sudo make apt
-
-test:
-  override:
-    - make prod_setup

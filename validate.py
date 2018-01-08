@@ -1,24 +1,26 @@
 #! /usr/bin/env python3
 import os
+import sys
 import unittest
 
-import sys
+import click
+
+try:
+    from enjoliver import configs, gunicorn_conf
+    from enjoliver.model import Base
+except ModuleNotFoundError:
+    click.echo('please install enjoliver first: cd enjoliver-api && pip install -e .')
+    sys.exit(255)
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 APP_PATH = os.path.join(PROJECT_PATH, "app")
-PYTHON = os.path.join(PROJECT_PATH, "env/bin/python3")
 sys.path.append(APP_PATH)
-
-for p in os.listdir(os.path.join(PROJECT_PATH, "env/lib/")):
-    PYTHON_LIB = os.path.join(PROJECT_PATH, "env/lib/%s/site-packages" % p)
-    sys.path.append(PYTHON_LIB)
-
-from app import (
-    configs,
-)
 
 
 class TestValidateMatchboxAssets(unittest.TestCase):
+    """
+    These tests are NOT unit tests. Instead, they are used to validate the previous 'make' steps
+    """
     cwd = os.path.dirname(os.path.abspath(__file__))
     matchbox = os.getenv("CHECK_MATCHBOX_PATH", "%s/matchbox" % cwd)
     assets = "%s/assets" % matchbox
