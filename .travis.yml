@@ -1,37 +1,55 @@
-language: go
-
-go:
-  - 1.7.5
-
-os:
-  - linux
-
+os: linux
 sudo: required
 dist: trusty
+cache:
+  pip: true
 
-before_install:
-  - sudo apt-get autoclean
-  - sudo apt-get autoremove
+#addons:
+#  apt:
+#    packages:
+#      - python-tox
 
-install:
-  - sudo -E make apt
-  - make submodules
-  - make pip
-  - make dev_setup_runtime
-  - make -C app/tests testing.id_rsa
-  - make front
+services:
+  - postgresql
 
-before_script:
-  - make assets
+addons:
+  postgresql: "9.4"
 
-  - sudo -E make aci_core
-  - sudo -E make container_linux
+matrix:
+  include:
+    - language: python
+      python: 3.6
+      install:
+        - pip install tox
+        - psql -c 'create database enjoliver_testing'
+      script:
+        - cd enjoliver-api && tox
+    - language: go
+      go: 1.7.5
 
-  - make config
 
-script:
-  - make check
-  - SKIP_ACSERVER=y make validate
+#before_install:
+#  - sudo apt-get autoclean
+#  - sudo apt-get autoremove
+
+#install:
+#  - sudo -E make apt
+#  - make submodules
+#  - make pip
+#  - make dev_setup_runtime
+#  - make -C app/tests testing.id_rsa
+#  - make front
+
+#before_script:
+#  - make assets
+#  - sudo -E make aci_core
+#  - sudo -E make container_linux
+#  - make config
+
+#script:
+#  - cd enjoliver-api && tox
+#  - make check
+#  - SKIP_ACSERVER=y make validate
 
 # If we are in the private repo, publish success on the public one
 after_success:

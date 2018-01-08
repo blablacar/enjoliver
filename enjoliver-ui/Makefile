@@ -8,10 +8,7 @@ install:
 build:
 	npm run build
 
-clean-build: clean install
-	npm run build
-
 clean:
 	rm -Rf $(NODE_MODULES)
 
-
+clean-build: clean install build

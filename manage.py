@@ -3,52 +3,19 @@ import argparse
 import multiprocessing
 import os
 import signal
+from sqlalchemy import create_engine
 
-import sys
-import time
+from enjoliver import configs, gunicorn_conf
+from enjoliver.model import Base
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
-APP_PATH = os.path.join(PROJECT_PATH, "app")
-PYTHON = os.path.join(PROJECT_PATH, "env/bin/python3")
-sys.path.append(APP_PATH)
-
-for p in os.listdir(os.path.join(PROJECT_PATH, "env/lib/")):
-    PYTHON_LIB = os.path.join(PROJECT_PATH, "env/lib/%s/site-packages" % p)
-    sys.path.append(PYTHON_LIB)
-
-from app import (
-    configs,
-    smartdb,
-    ops,
-    gunicorn_conf
-)
+APP_PATH = os.path.join(PROJECT_PATH, "enjoliver-api")
 
 
 def init_db(ec):
     print("initializing db")
-    if "sqlite://" in ec.db_uri:
-        directory = os.path.dirname(ec.db_path)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
-    smart = smartdb.SmartDatabaseClient(ec.db_uri)
-    tries = 60
-    for i in range(tries):
-        try:
-            smart.create_base()
-
-            @smartdb.cockroach_transaction
-            def op(caller=init_db.__name__):
-                with smart.new_session() as session:
-                    ops.health_check_purge(session)
-
-            op(caller=init_db.__name__)
-            return
-        except ConnectionError as e:
-            print("%d/%d %s" % (i + 1, tries, e))
-            time.sleep(1)
-
-    raise ConnectionError(ec.db_uri)
+    engine = create_engine(ec.db_uri)
+    Base.metadata.create_all(bind=engine)
 
 
 def init_journal_dir(ec):
@@ -58,10 +25,10 @@ def init_journal_dir(ec):
 
 def gunicorn(ec):
     cmd = [
-        "%s/env/bin/gunicorn" % PROJECT_PATH,
+        "gunicorn",
         "--chdir",
         APP_PATH,
-        "api:application",
+        "enjoliver.api:gunicorn()",
         "--worker-class",
         ec.gunicorn_worker_type,
         "-b",
@@ -77,7 +44,7 @@ def gunicorn(ec):
         os.environ["prometheus_multiproc_dir"] = ec.prometheus_multiproc_dir
     fs_gunicorn_cleaning()
 
-    p = multiprocessing.Process(target=lambda: os.execve(cmd[0], cmd, os.environ))
+    p = multiprocessing.Process(target=lambda: os.execvpe(cmd[0], cmd, os.environ))
 
     def stop(signum, frame):
         print("terminating %d" % p.pid)
@@ -123,22 +90,22 @@ def matchbox(ec):
 
 def plan(ec):
     cmd = [
-        PYTHON,
+        'python',
         "%s/plans/k8s_2t.py" % APP_PATH,
     ]
     print("exec[%s] -> %s\n" % (os.getpid(), " ".join(cmd)))
     with open(ec.plan_pid_file, "w") as f:
         f.write("%d" % os.getpid())
-    os.execve(cmd[0], cmd, os.environ)
+    os.execvpe(cmd[0], cmd, os.environ)
 
 
 def validate():
     cmd = [
-        PYTHON,
+        'python',
         "%s/validate.py" % PROJECT_PATH,
     ]
     print("exec[%s] -> %s\n" % (os.getpid(), " ".join(cmd)))
-    os.execve(cmd[0], cmd, os.environ)
+    os.execvpe(cmd[0], cmd, os.environ)
 
 
 def show_configs(ec):
@@ -150,7 +117,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='Enjoliver')
     parser.add_argument('task', type=str, choices=["gunicorn", "plan", "matchbox", "show-configs", "validate"],
                         help="Choose the task to run")
-    parser.add_argument('--configs', type=str, default="%s/configs.yaml" % APP_PATH,
+    parser.add_argument('--configs', type=str, default="%s/enjoliver/configs.yaml" % APP_PATH,
                         help="Choose the yaml config file")
     task = parser.parse_args().task
     f = parser.parse_args().configs

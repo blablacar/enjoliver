@@ -6,18 +6,19 @@ import sys
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 APP_PATH = os.path.join(PROJECT_PATH, "app")
-PYTHON = os.path.join(PROJECT_PATH, "env/bin/python3")
 sys.path.append(APP_PATH)
 
-for p in os.listdir(os.path.join(PROJECT_PATH, "env/lib/")):
-    PYTHON_LIB = os.path.join(PROJECT_PATH, "env/lib/%s/site-packages" % p)
-    sys.path.append(PYTHON_LIB)
-
+#for p in os.listdir(os.path.join(PROJECT_PATH, "env/lib/")):
+#    PYTHON_LIB = os.path.join(PROJECT_PATH, "env/lib/%s/site-packages" % p)
+#    sys.path.append(PYTHON_LIB)
+#
 from app import (
     configs,
 )
 
-
+"""
+These tests are NOT unit tests. Instead, they are used to validate the previous 'make' steps
+"""
 class TestValidateMatchboxAssets(unittest.TestCase):
     cwd = os.path.dirname(os.path.abspath(__file__))
     matchbox = os.getenv("CHECK_MATCHBOX_PATH", "%s/matchbox" % cwd)

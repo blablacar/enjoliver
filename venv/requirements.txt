@@ -1,0 +1,15 @@
+certifi
+Flask==0.12.2
+gunicorn==19.7.1
+gevent==1.2.2
+SQLAlchemy==1.1.13
+requests==2.18.4
+boto3==1.4.6
+kubernetes==3.0.0
+prometheus-client==0.0.20
+psutil==5.2.2
+PyYAML==3.12
+cockroachdb==0.1.0
+deepdiff==3.3.0
+flasgger==0.6.6
+pytest==3.2.3
