@@ -163,25 +163,14 @@ class KernelVirtualMachinePlayer(unittest.TestCase):
 
     @staticmethod
     def process_target_api():
-        os.environ["ENJOLIVER_DB_PATH"] = "%s/enjoliver.sqlite" % KernelVirtualMachinePlayer.euid_path
         os.environ["ENJOLIVER_IGNITION_JOURNAL_DIR"] = "%s/ignition_journal" % KernelVirtualMachinePlayer.euid_path
-
-        try:
-            os.remove(os.environ["ENJOLIVER_DB_PATH"])
-        except OSError:
-            pass
 
         shutil.rmtree(os.environ["ENJOLIVER_IGNITION_JOURNAL_DIR"], ignore_errors=True)
 
-        try:
-            with open("%s/.config/enjoliver/config.json" % os.getenv("HOME")) as f:
-                conf = json.load(f)
-                os.environ["ENJOLIVER_AWS_ACCESS_KEY_ID"] = conf["AWS_ACCESS_KEY_ID"]
-                os.environ["ENJOLIVER_AWS_SECRET_ACCESS_KEY"] = conf["AWS_SECRET_ACCESS_KEY"]
-        except (IOError, ValueError):
-            pass
+        # XXX: tests require with an empty db
+        subprocess.run("sudo -u postgres psql -c 'drop database enjoliver_local;'", shell=True)
+        subprocess.run("sudo -u postgres psql -c 'create database enjoliver_local;'", shell=True)
 
-        os.environ["ENJOLIVER_BACKUP_BUCKET_NAME"] = "bbcenjoliver-dev"
         os.environ["ENJOLIVER_SYNC_NOTIFY_TTL"] = "0"
         cmd = [
             "%s" % sys.executable,
@@ -346,7 +335,7 @@ class KernelVirtualMachinePlayer(unittest.TestCase):
     def set_api(cls):
         cls.p_api = multiprocessing.Process(target=KernelVirtualMachinePlayer.process_target_api, name="api")
         cls.p_api.start()
-        time.sleep(0.5)
+        time.sleep(5)
         assert cls.p_api.is_alive() is True
         cls.p_list.append(cls.p_api)
 
@@ -392,7 +381,7 @@ class KernelVirtualMachinePlayer(unittest.TestCase):
         cls.clean_sandbox()
         cls.pause(cls.wait_setup_teardown)
         cls.write_ending(cls.__name__)
-        subprocess.check_output(["reset", "-q"])
+        #subprocess.check_output(["reset", "-q"])
 
     @staticmethod
     def write_ending(message):
@@ -432,11 +421,12 @@ class KernelVirtualMachinePlayer(unittest.TestCase):
                 raise
 
     def setUp(self):
-        subprocess.call(["reset", "-q"])
+        #subprocess.call(["reset", "-q"])
         self.clean_sandbox()
         self.api_healthz()
 
     def clean_up_virtual_machine(self, name: str):
+        pass
         for elt in [["virsh", "destroy", name], ["virsh", "undefine", name],
                     ["virsh", "vol-delete", "%s.qcow2" % name, "--pool", "default"]]:
             self.virsh(elt)
