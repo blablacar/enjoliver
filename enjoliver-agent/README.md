@@ -24,3 +24,4 @@ The purpose of this daemon is provide local information.
 * kernel
 * fleet
 * vault
+* socat
