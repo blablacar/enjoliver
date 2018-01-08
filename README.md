@@ -277,7 +277,7 @@ Step-by-step:
 
     make submodules
     make -C runtime dev_setup
-    make -C tests testing.id_rsa
+    make -C enjoliver-testsuite testing.id_rsa
     make front
     make -C matchbox/assets/discoveryC
     make -C matchbox/assets/enjoliver-agent
@@ -335,4 +335,4 @@ At the end of the setup, a kubectl proxy is running on `127.0.0.1:8001`
 Connect inside with `ssh`:
 
 
-    ./app/s.sh
+    ./enjoliver-testsuite/s.sh

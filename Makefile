@@ -66,7 +66,7 @@ clean_after_assets:
 	$(MAKE) -C enjoliver-agent clean
 
 check_clean:
-	$(MAKE) -C app/tests/ fclean
+	$(MAKE) -C enjoliver-testsuite/ fclean
 
 clean: clean_after_assets check_clean
 	rm -Rf runtime/acserver.d/*
@@ -75,15 +75,15 @@ clean: clean_after_assets check_clean
 $(CHECK):
 	$(MAKE) -C discoveryC/ $(CHECK)
 	$(MAKE) -C enjoliver-agent/ $(CHECK)
-	$(MAKE) -C app/tests/ $(CHECK)
+	$(MAKE) -C enjoliver-testsuite/ $(CHECK)
 
 $(CHECK_EUID): validate
 	test $(shell id -u -r) -eq 0
-	$(MAKE) -C app/tests/ $(CHECK_EUID)
+	$(MAKE) -C enjoliver-testsuite/ $(CHECK_EUID)
 
 $(CHECK_EUID_KVM_PLAYER):
 	test $(shell id -u -r) -eq 0
-	$(MAKE) -C app/tests/ $(CHECK_EUID_KVM_PLAYER)
+	$(MAKE) -C enjoliver-testsuite/ $(CHECK_EUID_KVM_PLAYER)
 
 submodules:
 	git submodule update --init --recursive
@@ -120,7 +120,7 @@ dev_setup:
 	chown -R $(MY_USER): $(CWD)
 	su -m $(MY_USER) -c "make -C $(CWD) submodules"
 	su -m $(MY_USER) -c "make -C $(CWD) dev_setup_runtime"
-	su -m $(MY_USER) -c "make -C $(CWD)/app/tests testing.id_rsa"
+	su -m $(MY_USER) -c "make -C $(CWD)/enjoliver-testsuite testing.id_rsa"
 	su -m $(MY_USER) -c "make -C $(CWD) front"
 	su -m $(MY_USER) -c "make -C $(CWD) assets"
 	$(MAKE) -C $(CWD) aci
