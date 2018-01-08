@@ -28,7 +28,7 @@ apply_deps_delay: 60
 #plan_pid_file: '/opt/enjoliver/app/plan.pid'
 
 gunicorn_worker_type: 'sync'
-gunicorn_workers: 1
+gunicorn_workers: 4
 gunicorn_bind: "0.0.0.0:5000"
 
 db_uri: 'postgresql://127.0.0.1/enjoliver_local'
