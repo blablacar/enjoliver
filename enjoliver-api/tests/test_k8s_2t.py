@@ -10,7 +10,7 @@ class TestKubernetes2tiers(TestCase):
     # test_matchbox_path = "%s/test_matchbox" % tests_path
     test_matchbox_path = os.path.join(
         os.path.dirname(__file__),
-        '..', '..', 'tests', 'test_matchbox',
+        '..', '..', 'enjoliver-testsuite', 'test_matchbox',
     )
     api_uri = "http://127.0.0.1:5000"
 

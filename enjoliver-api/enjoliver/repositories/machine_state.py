@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from sqlalchemy.orm import joinedload, sessionmaker
+from sqlalchemy.orm import joinedload, sessionmaker, Session
 
 from enjoliver.db import session_commit
 from enjoliver.model import MachineCurrentState, MachineInterface
@@ -13,10 +13,9 @@ class MachineStateRepository:
     def __init__(self, sess_maker: sessionmaker):
         self.__sess_maker = sess_maker
 
-    def _update_state(self, machine_current_state: MachineCurrentState):
+    def _update_state(self, session: Session, machine_current_state: MachineCurrentState):
         try:
-            with session_commit(sess_maker=self.__sess_maker) as session:
-                session.add(machine_current_state)
+            session.add(machine_current_state)
         except Exception as e:
             # updating state is not critical so we accept to wide catch all exception and pass over it just with a log
             logger.error("fail to update machine with mac: %s with state %s: %s" % (
@@ -48,14 +47,16 @@ class MachineStateRepository:
                 .filter(MachineInterface.mac == mac) \
                 .one_or_none()
 
-            machine_id = None if not machine_interface else machine_interface.id
             now = datetime.datetime.utcnow()
+            machine_id = None
+            if machine_interface is not None:
+                machine_id = machine_interface.machine_id
 
             if not state_machine:
                 logger.debug(
                     "machine with mac: %s doesn't exist in table %s: creating with state %s" % (
                         mac, MachineCurrentState.__tablename__, state))
-                self._update_state(MachineCurrentState(
+                self._update_state(session, MachineCurrentState(
                     machine_id=machine_id,
                     state_name=state,
                     machine_mac=mac,
@@ -66,4 +67,4 @@ class MachineStateRepository:
                 state_machine.state_name = state
                 state_machine.machine_id = machine_id
                 state_machine.updated_date = now
-                self._update_state(state_machine)
+                self._update_state(session, state_machine)
