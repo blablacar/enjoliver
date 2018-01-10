@@ -841,6 +841,7 @@ storage:
               - --cluster-signing-cert-file=/etc/secrets/kube-apiserver.certificate
               - --cluster-signing-key-file=/etc/secrets/kube-apiserver.private_key
               - --root-ca-file=/etc/secrets/kube-apiserver.issuing_ca
+              - --terminated-pod-gc-threshold 1000
               resources:
                 requests:
                   cpu: 200m
