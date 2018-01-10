@@ -8,7 +8,7 @@ ACI=$(PROJECT)/aci
 DEBIAN=debian
 GO=go
 BUILDER_HYPERKUBE=builder-hyperkube
-SOCAT=SOCAT
+SOCAT=socat
 
 default: push
 
