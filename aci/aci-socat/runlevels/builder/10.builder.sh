@@ -24,7 +24,7 @@ CC='/usr/bin/gcc -static' CFLAGS='-fPIC' ./configure \
 	--enable-static
 
 cd /build
-curl -LO ftp://ftp.cwru.edu/pub/bash/readline-${READLINE_VERSION}.tar.gz
+curl -LO https://ftp.gnu.org/gnu/readline/readline-${READLINE_VERSION}.tar.gz
 tar xzvf readline-${READLINE_VERSION}.tar.gz
 cd readline-${READLINE_VERSION}
 CC='/usr/bin/gcc -static' CFLAGS='-fPIC' ./configure \
