@@ -6,6 +6,7 @@ import re
 import shutil
 import socket
 import subprocess
+import typing
 import unittest
 import warnings
 
@@ -516,34 +517,81 @@ class KernelVirtualMachinePlayer(unittest.TestCase):
             time.sleep(self.testing_sleep_seconds)
         self.assertEqual(len(to_start), 0)
 
-    def etcd_endpoint_health(self, ips: list, port: int, tries=30, verify=True, certs_name=""):
+    def assertFuncTrueInLessThanXTries(self, func: typing.Callable, tries: int=30, *args, **kwargs):
+        """
+        assert a function returned True in less than x tries.
+
+        :param func: the func to test
+        :param tries: the max number of tries
+        :param args: the args to func
+        :param kwargs: the kwargs to func
+        """
+        for step in range(tries):
+            display("-> TRY: {}/{} {}".format(step+1, tries, func))
+            if func(*args, **kwargs):
+                return
+            time.sleep(self.testing_sleep_seconds * 2)
+
+        raise AssertionError('{}() was called more than {} times, and none of these calls returned True'.format(
+            func, tries
+        ))
+
+    def etcd_endpoint_health(self, ips: list, port: int, tries: int=30, verify=True, certs_name=""):
+        """
+        assert health is true for all nodes whose IP address is in ips.
+        :param ips: the ips to check
+        :param port: the TCP port where to query the status
+        :param tries:  the number of tries before failing
+        :param verify: should we verify the SSL CA or not
+        :param certs_name: the CA name
+        :return: True or False
+        """
+
         self.assertIs(list, type(ips))
         self.assertGreater(len(ips), 0)
-        certs = tuple()
+
+        certs = ()
         if certs_name:
             verify, certs = self._get_certificates(certs_name)
-        for t in range(tries):
-            if len(ips) == 0:
-                break
-            for i, ip in enumerate(ips):
-                try:
-                    endpoint = "https://%s:%d/health" % (ip, port)
-                    request = requests.get(endpoint, verify=verify, cert=certs)
-                    response_body = json.loads(request.content.decode())
-                    request.close()
-                    display("-> RESULT %s %s" % (endpoint, response_body))
-                    sys.stdout.flush()
-                    if response_body == {u"health": u"true"}:
-                        ips.pop(i)
-                        display("-> REMAIN %s for %s" % (str(ips), self.etcd_endpoint_health.__name__))
-                        continue
 
-                except Exception as e:
-                    display(e)
-                display("-> %d/%d NOT READY %s:%d for %s" % (t, tries, ip, port, self.etcd_endpoint_health.__name__))
-                time.sleep(self.testing_sleep_seconds * 2)
+        self.assertFuncTrueInLessThanXTries(
+            self._etcd_endpoint_health,
+            tries,
+            ips=ips,
+            port=port,
+            verify=verify,
+            certs=certs,
+        )
 
-        self.assertEqual(len(ips), 0)
+    def _etcd_endpoint_health(self, ips: list, port: int, verify, certs):
+        """
+        return True if health is true for all nodes whose IP address is in ips.
+        :param ips: the ips to check
+        :param port: the TCP port where to query the status
+        :param verify: passed to requests lib
+        :param certs: passed to requests lib
+        :return: True or False
+        """
+
+        healths = {}
+        for i, ip in enumerate(ips):
+            try:
+                endpoint = "https://%s:%d/health" % (ip, port)
+                request = requests.get(endpoint, verify=verify, cert=certs)
+                response_body = json.loads(request.content.decode())
+                request.close()
+                sys.stdout.flush()
+                healths[ip] = response_body == {u"health": u"true"}
+            except Exception as e:
+                healths[ip] = False
+                display(e)
+
+            if not healths[ip]:
+                display("-> NOT READY %s:%d for %s" % (
+                    ip, port, self._etcd_endpoint_health.__name__
+                ))
+
+        return False not in healths.values()
 
     def _get_vault_uri_by_initier(self, ip: str, port: int, tries=30):
         vault_uri = ""
