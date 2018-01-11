@@ -622,7 +622,7 @@ systemd:
       enable: true
       contents: |
         [Service]
-        ExecStart=/usr/bin/journalctl --verify
+        ExecStart=-/usr/bin/journalctl --verify
         [Install]
         RequiredBy=multi-user.target
 
