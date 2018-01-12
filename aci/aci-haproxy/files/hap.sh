@@ -64,7 +64,7 @@ make -j && make install
 cd ${DIR}
 
 export STATIC_PCRE=${DIR}/target/${PCRE}
-wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/${PCRE}.tar.gz
+wget http://ftp.csx.cam.ac.uk/pub/software/programming/pcre/${PCRE}.tar.gz
 
 tar xvzf ${PCRE}.tar.gz
 cd  ${PCRE}
