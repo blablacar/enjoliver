@@ -1,6 +1,7 @@
 # Enjoliver
 
 Travis-ci (com / org)
+[![Build Status](https://travis-ci.org/blablacar/enjoliver.svg?branch=master)](https://travis-ci.org/blablacar/enjoliver)
 
 
 ## Description
