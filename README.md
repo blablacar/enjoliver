@@ -300,7 +300,7 @@ Start an interactive Kubernetes deployment of 2 nodes:
 
 
     # Start the deployment
-    sudo make -C tests check_euid_it_plans_enjolivage_disk_2_nodes
+    sudo make -C enjoliver-testsuite check_euid_it_plans_enjolivage_disk_2_nodes
 
 
 The enjoliver API is available on `127.0.0.1:5000`, the user interface is behind the `/ui`
