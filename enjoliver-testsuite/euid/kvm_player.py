@@ -58,8 +58,9 @@ def display(message):
             time.sleep(0.01)
 
 
-@unittest.skipIf(os.geteuid() != 0, "TestKVMDiscovery need privilege")
-@unittest.skipIf(is_virtinstall() != 0, "TestKVMDiscovery need virt-install")
+import pytest
+@pytest.mark.skipif(os.geteuid() != 0, reason="TestKVMDiscovery need privilege")
+@pytest.mark.skipif(is_virtinstall() != 0, reason="TestKVMDiscovery need virt-install")
 class KernelVirtualMachinePlayer(unittest.TestCase):
     """
     This class is used by all Kernel Virtual Machine testing suite
