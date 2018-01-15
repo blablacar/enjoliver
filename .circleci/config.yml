@@ -5,9 +5,14 @@
 version: 2
 jobs:
   build:
+    working_directory: ~/repo
     docker:
       - image: circleci/python:3.6.1
-    working_directory: ~/repo
+      - image: circleci/postgres:9.4
+        environment:
+          POSTGRES_USER: circleci
+          POSTGRES_DB: enjoliver_testing
+
     steps:
       - checkout
       # Download and cache dependencies
