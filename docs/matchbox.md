@@ -2,7 +2,7 @@
 
 [Official project](https://github.com/coreos/matchbox#matchbox)
 
-Enjoliver use 3 profiles in matchbox
+Enjoliver uses 3 profiles in matchbox
 1) discovery
 2) etcd-member-kubernetes-control-plane
 2) kubernetes-node
@@ -17,7 +17,7 @@ This role is for:
 2) vault
 3) kube-{apiserver, controller-manager, scheduler}
 
-This role need to be bootstrapped as 3, 5, ... instances and is needed by all the other nodes.
+This role needs to be bootstrapped as 3, 5, ... instances and is needed by all the other nodes.
 
 To solve this problem, the Enjoliver Scheduler will apply the roles only if the required number of instances are available.
 

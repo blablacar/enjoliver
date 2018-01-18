@@ -8,8 +8,8 @@ cluster.
 ## Description
 
 
-Enjoliver is a framework that aim to deploy and maintain an usable Kubernetes
-cluster from a bare-metal environment.
+Enjoliver is a framework that aims at deploying and maintaining an usable
+Kubernetes cluster from a bare-metal environment.
 
 Enjoliver only supports `rkt` as the kubelet runtime for now.
 
@@ -43,6 +43,7 @@ an runs tests on each components.
     * Lifecycle management
 
 [Enjoliver architecture overview](docs/enjoliver-architecture.md)
+
 [How to run enjoliver in production](docs/usage-production.md)
 
 

@@ -2,7 +2,7 @@
 
 ![cp](docs/topology.jpg)
 
-Kubernetes controller manager is deployed as *Pod* on each nodes of the control plane.
+Kubernetes controller manager is deployed as *Pod* on each node of the control plane.
 When the control plane runs the controller, the scheduler starts as a DaemonSet.
 
 Vault, Kubernetes and Fleet have dedicated etcd clusters.

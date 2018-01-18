@@ -20,7 +20,7 @@ This profile has one associated group, with 2 metadata entries:
 
 How the discovery process works:
 
-![machine-boot](docs/machine-boot.jpg)
+![machine-boot](machine-boot.jpg)
 
 
 ## Rolling Updates
@@ -42,8 +42,10 @@ If the state is outdated, the machine will ask its rollingUpdate strategy:
 * reboot
 * poweroff
 
-If a strategy is returned, the machine try to takes a lock in locksmith and proceed to tear down the machine.
-The tear down proceed to drain the kubernetes node. Its disable the scheduling of the node.
+If a strategy is returned, the machine try to takes a lock in locksmith and
+proceeds to tear down the machine.
+The tear down proceed to drain the kubernetes node. Its disables the scheduling
+of the node.
 
 When the machine goes back, the ready process starts:
 * check etcd-vault
