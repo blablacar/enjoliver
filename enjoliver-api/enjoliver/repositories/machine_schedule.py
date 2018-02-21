@@ -55,13 +55,9 @@ class MachineScheduleRepository:
     def get_all_schedules(self):
         result = dict()
         with session_commit(sess_maker=self.__sess_maker) as session:
-            for machine in session.query(Machine) \
-                    .options(joinedload("interfaces")) \
-                    .options(joinedload("schedules")) \
-                    .join(Schedule) \
-                    .filter(MachineInterface.as_boot == True):
+            for machine in session.query(Machine):
                 if machine.schedules:
-                    result[machine.interfaces[0].mac] = [k.role for k in machine.schedules]
+                    result[machine.boot_interface.mac] = [k.role for k in machine.schedules]
 
         return result
 
@@ -101,16 +97,16 @@ class MachineScheduleRepository:
 
     def _construct_machine_dict(self, machine: Machine, role):
         return {
-            "mac": machine.interfaces[0].mac,
-            "ipv4": machine.interfaces[0].ipv4,
-            "cidrv4": machine.interfaces[0].cidrv4,
-            "gateway": machine.interfaces[0].gateway,
-            "as_boot": machine.interfaces[0].as_boot,
-            "name": machine.interfaces[0].name,
-            "netmask": machine.interfaces[0].netmask,
+            "mac": machine.boot_interface.mac,
+            "ipv4": machine.boot_interface.ipv4,
+            "cidrv4": machine.boot_interface.cidrv4,
+            "gateway": machine.boot_interface.gateway,
+            "as_boot": machine.boot_interface.as_boot,
+            "name": machine.boot_interface.name,
+            "netmask": machine.boot_interface.netmask,
             "roles": role,
             "created_date": machine.created_date,
-            "fqdn": machine.interfaces[0].fqdn,
+            "fqdn": machine.boot_interface.fqdn,
             "disks": [{"path": k.path, "size-bytes": k.size} for k in machine.disks],
         }
 
@@ -118,10 +114,7 @@ class MachineScheduleRepository:
         machines = []
         with session_commit(sess_maker=self.__sess_maker) as session:
             for machine in session.query(Machine) \
-                    .options(joinedload("interfaces")) \
-                    .options(joinedload("disks")) \
                     .join(Schedule) \
-                    .filter(MachineInterface.as_boot == True) \
                     .filter(Schedule.role == role):
                 machines.append(self._construct_machine_dict(machine, role))
 
@@ -134,13 +127,9 @@ class MachineScheduleRepository:
         roles = list(roles)
 
         with session_commit(sess_maker=self.__sess_maker) as session:
-            for machine in session.query(Machine) \
-                    .options(joinedload("interfaces")) \
-                    .options(joinedload("disks")) \
-                    .join(Schedule) \
-                    .filter(MachineInterface.as_boot == True):
+            for machine in session.query(Machine):
                 # TODO Maybe do this with a sqlalchemy filter func
-                if len(roles) == len(roles) and set(k.role for k in machine.schedules) == set(roles):
+                if set(k.role for k in machine.schedules) == set(roles):
                     machines.append(self._construct_machine_dict(machine, roles))
 
         return machines

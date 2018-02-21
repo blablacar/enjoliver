@@ -241,3 +241,53 @@ class TestMachineScheduleRepo(unittest.TestCase):
 
         s = ms.get_machines_by_roles("kubernetes-control-plane")
         self.assertEqual(1, len(s))
+
+    def test_one_machine_boot_interface_is_not_first(self):
+        mac = "aa:bb:cc:dd:ee:0{}"
+        with session_commit(sess_maker=self.sess_maker) as session:
+            uuid = "b7f5f93a-b029-475f-b3a4-479ba198cb8a"
+            machine = Machine(uuid=uuid)
+            session.add(machine)
+            session.flush()
+
+            # add 3 non-boot interfaces
+            for i in range(3):
+                session.add(MachineInterface(
+                    machine_id=machine.id,
+                    mac=mac.format(i),
+                    netmask=1,
+                    ipv4="10.10.10.10",
+                    cidrv4="127.0.0.1/8",
+                    as_boot=False,
+                    gateway="1.1.1.1",
+                    name="foo"
+                ))
+
+            # and a 4th one, with as_boot = True
+            session.add(MachineInterface(
+                machine_id=machine.id,
+                mac=mac.format(3),
+                netmask=1,
+                ipv4="10.10.10.10",
+                cidrv4="127.0.0.1/8",
+                as_boot=True,
+                gateway="1.1.1.1",
+                name="foo"
+            ))
+            session.commit()
+
+        ms = MachineScheduleRepository(sess_maker=self.sess_maker)
+        data = {
+            "roles": ["kubernetes-control-plane", "etcd-member"],
+            "selector": {
+                "mac": mac.format(0)
+            }
+        }
+        # schedule using the first but non-boot interface
+        ms.create_schedule(data)
+
+        s = ms.get_all_schedules()
+        self.assertEqual(len(s), 1)
+
+        # verify the scheduled machine is indexed by its boot-interface, the 3rd one in this case
+        self.assertIn(mac.format(3), s)

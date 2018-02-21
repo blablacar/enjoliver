@@ -1,4 +1,5 @@
 import logging
+import os
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def gunicorn():
     ec = EnjoliverConfig(importer=__file__)
-    engine = create_engine(ec.db_uri)
+    engine = create_engine(ec.db_uri, echo=bool(os.environ.get('SQLALCHEMY_ECHO', False)))
     sess_maker = sessionmaker(bind=engine)
     cache = FileSystemCache(ec.werkzeug_fs_cache_dir)
     app = create_app(

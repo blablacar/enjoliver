@@ -23,7 +23,7 @@ setup(
         'flask',
         'prometheus_client',
         'psutil',
-        'psycopg2',
+        'psycopg2-binary',
         'requests',
         'sqlalchemy',
         'werkzeug<0.13',

@@ -188,6 +188,7 @@ class Machine(Base):
     updated_date = Column(DateTime, default=None)
 
     interfaces = relationship('MachineInterface')
+    boot_interface = relationship('MachineInterface', primaryjoin="and_(Machine.id==MachineInterface.machine_id, MachineInterface.as_boot==True)", uselist=False)
     disks = relationship('MachineDisk')
     schedules = relationship('Schedule')
 
