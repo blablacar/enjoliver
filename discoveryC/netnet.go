@@ -40,7 +40,6 @@ func GetIPv4Netmask(cidr string) (ip string, mask int, err error) {
 }
 
 func LocalIfaces() (ifaces []Iface, err error) {
-	var iface Iface
 	var addrs []net.Addr
 
 	interfaces, err := net.Interfaces()
@@ -50,6 +49,7 @@ func LocalIfaces() (ifaces []Iface, err error) {
 
 	for i, interf := range interfaces {
 
+	        var iface Iface
 		addrs, err = interf.Addrs()
 		if err != nil {
 			glog.Warningf("skipping interface %d: %s", i, err)
@@ -74,10 +74,10 @@ func LocalIfaces() (ifaces []Iface, err error) {
 				if err != nil {
 					glog.Warningf("fail to get DNS for %s", iface.IPv4)
 				}
+                                ifaces = append(ifaces, iface)
+                                glog.V(2).Infof("adding interface %s in %d interfaces", iface.Name, len(ifaces))
 			}
 		}
-		ifaces = append(ifaces, iface)
-		glog.V(2).Infof("adding interface %s in %d interfaces", iface.Name, len(ifaces))
 	}
 	return ifaces, nil
 }
