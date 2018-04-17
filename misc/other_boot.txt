@@ -1,6 +1,6 @@
 rootflags=rw
 mount.usrflags=ro
-BOOT_IMAGE=/coreos/vmlinuz-a
+BOOT_IMAGE=/flatcar/vmlinuz-a
 mount.usr=/dev/mapper/usr
 verity.usr=PARTUUID=7130c94a-213a-4e5a-8e26-6cce9662f132
 rootflags=rw
@@ -9,5 +9,5 @@ consoleblank=0
 root=LABEL=ROOT
 console=ttyS0,115200n8
 console=tty0
-coreos.config.url=oem:///coreos-install.json
+flatcar.config.url=oem:///flatcar-install.json
 verity.usrhash=786d546775394eb9213e5d10c122acba0f55208c84adbd34c1133ddbca870b98

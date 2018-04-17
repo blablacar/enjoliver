@@ -356,10 +356,10 @@ class ModelTestCase(unittest.TestCase):
         with session_commit(sess_maker=self.sess_maker) as session:
             rq = "uuid=%s&mac=%s&os=installed" % (posts.M03["boot-info"]["uuid"], posts.M03["boot-info"]["mac"])
             i = crud.InjectLifecycle(session, request_raw_query=rq)
-            i.refresh_lifecycle_coreos_install(True)
+            i.refresh_lifecycle_flatcar_install(True)
         f = crud.FetchLifecycle(sess_maker=self.sess_maker)
-        self.assertTrue(f.get_coreos_install_status(posts.M03["boot-info"]["mac"]))
-        self.assertEqual(1, len(f.get_all_coreos_install_status()))
+        self.assertTrue(f.get_flatcar_install_status(posts.M03["boot-info"]["mac"]))
+        self.assertEqual(1, len(f.get_all_flatcar_install_status()))
 
     def test_36(self):
         with session_commit(sess_maker=self.sess_maker) as session:

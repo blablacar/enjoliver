@@ -1,4 +1,4 @@
-name: enjoliver.local/container-linux:latest
+name: enjoliver.local/flatcar:latest
 aci:
   dependencies:
     - enjoliver.local/upx:latest
@@ -6,7 +6,7 @@ aci:
     exec:
       - /usr/bin/make
       - -C
-      - /enjoliver/matchbox/assets/coreos
+      - /enjoliver/matchbox/assets/flatcar
       - re
     mountPoints:
       - name: enjoliver

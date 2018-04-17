@@ -30,7 +30,7 @@ Step-by-step:
 
     # Very long:
     sudo -E make aci
-    sudo -E make container_linux
+    sudo -E make flatcar
 
     # misc
     make config

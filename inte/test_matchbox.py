@@ -175,16 +175,16 @@ class TestBootConfigCommon(TestCase):
         kernel = lines[1].split(" ")
         kernel_expect = [
             'kernel',
-            '%s/assets/coreos/serve/coreos_production_pxe.vmlinuz' % self.gen.profile.api_uri,
+            '%s/assets/flatcar/serve/flatcar_production_pxe.vmlinuz' % self.gen.profile.api_uri,
             "console=ttyS0", "console=ttyS1",
-            'coreos.config.url=%s/ignition?uuid=${uuid}&mac=${net0/mac:hexhyp}' % self.gen.profile.api_uri,
-            'coreos.first_boot',
-            "coreos.oem.id=pxe"]
+            'flatcar.config.url=%s/ignition?uuid=${uuid}&mac=${net0/mac:hexhyp}' % self.gen.profile.api_uri,
+            'flatcar.first_boot',
+            "flatcar.oem.id=pxe"]
         self.assertEqual(kernel, kernel_expect)
 
         init_rd = lines[2].split(" ")
         init_rd_expect = ['initrd',
-                          '%s/assets/coreos/serve/coreos_production_pxe_image.cpio.gz' % self.gen.profile.api_uri]
+                          '%s/assets/flatcar/serve/flatcar_production_pxe_image.cpio.gz' % self.gen.profile.api_uri]
         self.assertEqual(init_rd, init_rd_expect)
 
         boot = lines[3]
@@ -196,8 +196,8 @@ class TestBootConfigCommon(TestCase):
         request.close()
         self.assertEqual(200, request.status_code)
 
-    def test_03_assets_coreos_serve_404(self):
-        r = requests.get("%s/assets/coreos/serve/404_request.not-here" % self.matchbox_endpoint)
+    def test_03_assets_flatcar_serve_404(self):
+        r = requests.get("%s/assets/flatcar/serve/404_request.not-here" % self.matchbox_endpoint)
         self.assertEqual(404, r.status_code)
 
 
@@ -262,16 +262,16 @@ class TestBootConfigSelector(TestBootConfigCommon):
         kernel = lines[1].split(" ")
         kernel_expect = [
             'kernel',
-            '%s/assets/coreos/serve/coreos_production_pxe.vmlinuz' % self.gen.profile.api_uri,
+            '%s/assets/flatcar/serve/flatcar_production_pxe.vmlinuz' % self.gen.profile.api_uri,
             "console=ttyS0", "console=ttyS1",
-            'coreos.config.url=%s/ignition?uuid=${uuid}&mac=${net0/mac:hexhyp}' % self.gen.profile.api_uri,
-            'coreos.first_boot',
-            "coreos.oem.id=pxe"]
+            'flatcar.config.url=%s/ignition?uuid=${uuid}&mac=${net0/mac:hexhyp}' % self.gen.profile.api_uri,
+            'flatcar.first_boot',
+            "flatcar.oem.id=pxe"]
         self.assertEqual(kernel, kernel_expect)
 
         init_rd = lines[2].split(" ")
         init_rd_expect = ['initrd',
-                          '%s/assets/coreos/serve/coreos_production_pxe_image.cpio.gz' % self.gen.profile.api_uri]
+                          '%s/assets/flatcar/serve/flatcar_production_pxe_image.cpio.gz' % self.gen.profile.api_uri]
         self.assertEqual(init_rd, init_rd_expect)
 
         boot = lines[3]

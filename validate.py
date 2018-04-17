@@ -35,16 +35,16 @@ class TestValidateMatchboxAssets(unittest.TestCase):
         list_dir = os.listdir(rule)
         self.assertIn("enjoliver-agent", list_dir)
 
-    def test_coreos(self):
-        rule = "%s/%s/serve" % (self.assets, self.test_coreos.__name__.replace("test_", ""))
+    def test_flatcar(self):
+        rule = "%s/%s/serve" % (self.assets, self.test_flatcar.__name__.replace("test_", ""))
         list_dir = os.listdir(rule)
-        self.assertIn("coreos_production_image.bin.bz2", list_dir)
-        self.assertIn("coreos_production_image.bin.bz2.sig", list_dir)
-        self.assertIn("coreos_production_image_verity.txt", list_dir)
-        self.assertIn("coreos_production_pxe.vmlinuz", list_dir)
-        self.assertIn("coreos_production_pxe.vmlinuz.sig", list_dir)
-        self.assertIn("coreos_production_pxe_image.cpio.gz", list_dir)
-        self.assertIn("coreos_production_pxe_image.cpio.gz.sig", list_dir)
+        self.assertIn("flatcar_production_image.bin.bz2", list_dir)
+        self.assertIn("flatcar_production_image.bin.bz2.sig", list_dir)
+        self.assertIn("flatcar_production_image_verity.txt", list_dir)
+        self.assertIn("flatcar_production_pxe.vmlinuz", list_dir)
+        self.assertIn("flatcar_production_pxe.vmlinuz.sig", list_dir)
+        self.assertIn("flatcar_production_pxe_image.cpio.gz", list_dir)
+        self.assertIn("flatcar_production_pxe_image.cpio.gz.sig", list_dir)
         self.assertIn("version.txt", list_dir)
 
 
@@ -138,7 +138,7 @@ class TestValidateRuntime(unittest.TestCase):
 
     def test_rkt(self):
         self.assertTrue(os.path.isfile(os.path.join(self.runtime_d, "rkt", "rkt")))
-        self.assertTrue(os.path.isfile(os.path.join(self.runtime_d, "stage1.d", "coreos.json")))
+        self.assertTrue(os.path.isfile(os.path.join(self.runtime_d, "stage1.d", "flatcar.json")))
         self.assertTrue(os.path.isfile(os.path.join(self.runtime_d, "paths.d", "paths.json")))
 
     def test_helm(self):

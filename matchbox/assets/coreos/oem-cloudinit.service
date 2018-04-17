@@ -1,6 +1,0 @@
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/coreos-cloudinit --oem=ec2-compat
-
-[Install]
-WantedBy=multi-user.target

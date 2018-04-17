@@ -9,8 +9,8 @@ extra_selectors: {'os': 'installed'}
 
 api_uri: 'http://127.0.0.1:5000'
 #assets_server_uri: 'http://172.20.0.1'
-#kernel: '/assets/coreos/serve/coreos_production_pxe.vmlinuz'
-#initrd: '/assets/coreos/serve/coreos_production_pxe_image.cpio.gz'
+#kernel: '/assets/flatcar/serve/flatcar_production_pxe.vmlinuz'
+#initrd: '/assets/flatcar/serve/flatcar_production_pxe_image.cpio.gz'
 
 matchbox_path: '/var/lib/matchbox'
 matchbox_uri: 'http://127.0.0.1:8080'
@@ -71,8 +71,8 @@ cephtools_image_url: 'enjoliver.local/ceph-tools:latest'
 
 etc_hosts: ['172.20.0.1 enjoliver.local']
 
-coreos_install_base_url: "http://enjoliver.local:5000/assets/coreos"
-coreos_install_lock_seconds: 45
+flatcar_install_base_url: "http://enjoliver.local:5000/assets/flatcar"
+flatcar_install_lock_seconds: 45
 
 nameservers: ["8.8.8.8", "8.8.4.4"]
 ntp: ["0.arch.pool.ntp.org", "1.arch.pool.ntp.org", "2.arch.pool.ntp.org", "3.arch.pool.ntp.org"]

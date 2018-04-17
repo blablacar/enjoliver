@@ -121,11 +121,11 @@ class Healthz(Base):
     host = Column(String, nullable=True)
 
 
-class LifecycleCoreosInstall(Base):
+class LifecycleFlatcarInstall(Base):
     """
-    After the script 'coreos-install' the discovery machine POST the success / failure to a dedicated Flask route
+    After the script 'flatcar-install' the discovery machine POST the success / failure to a dedicated Flask route
     """
-    __tablename__ = 'lifecycle_coreos_install'
+    __tablename__ = 'lifecycle_flatcar_install'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
@@ -138,7 +138,7 @@ class LifecycleCoreosInstall(Base):
 
 class LifecycleIgnition(Base):
     """
-    During the Lifecycle of a Machine, the state of the /usr/share/oem/coreos-install.json is POST to a dedicated Flask
+    During the Lifecycle of a Machine, the state of the /usr/share/oem/flatcar-install.json is POST to a dedicated Flask
     route, this table store this event and if the current Machine is up to date
     """
     __tablename__ = 'lifecycle_ignition'
@@ -193,7 +193,7 @@ class Machine(Base):
     schedules = relationship('Schedule')
 
     lifecycle_rolling = relationship('LifecycleRolling')
-    lifecycle_coreos_install = relationship('LifecycleCoreosInstall')
+    lifecycle_flatcar_install = relationship('LifecycleFlatcarInstall')
     lifecycle_ignition = relationship('LifecycleIgnition')
 
     machine_state = relationship('MachineCurrentState')

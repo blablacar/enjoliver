@@ -60,14 +60,14 @@ class TestGenerateProfiles(TestCase):
 
     def test_01_boot(self):
         expect = {
-            'kernel': '%s/assets/coreos/serve/coreos_production_pxe.vmlinuz' % self.gen.api_uri,
-            'initrd': ['%s/assets/coreos/serve/coreos_production_pxe_image.cpio.gz' % self.gen.api_uri],
+            'kernel': '%s/assets/flatcar/serve/flatcar_production_pxe.vmlinuz' % self.gen.api_uri,
+            'initrd': ['%s/assets/flatcar/serve/flatcar_production_pxe_image.cpio.gz' % self.gen.api_uri],
             'cmdline':
                 {
                     'console': 'ttyS0 console=ttyS1',
-                    'coreos.first_boot': '',
-                    'coreos.oem.id': 'pxe',
-                    'coreos.config.url': '%s/ignition?uuid=${uuid}&mac=${net0/mac:hexhyp}' % self.gen.api_uri
+                    'flatcar.first_boot': '',
+                    'flatcar.oem.id': 'pxe',
+                    'flatcar.config.url': '%s/ignition?uuid=${uuid}&mac=${net0/mac:hexhyp}' % self.gen.api_uri
                 }
         }
         self.gen._boot()
@@ -78,15 +78,15 @@ class TestGenerateProfiles(TestCase):
         expect = {
             "cloud_id": "",
             "boot": {
-                "kernel": "%s/assets/coreos/serve/coreos_production_pxe.vmlinuz" % self.gen.api_uri,
+                "kernel": "%s/assets/flatcar/serve/flatcar_production_pxe.vmlinuz" % self.gen.api_uri,
                 "initrd": [
-                    "%s/assets/coreos/serve/coreos_production_pxe_image.cpio.gz" % self.gen.api_uri
+                    "%s/assets/flatcar/serve/flatcar_production_pxe_image.cpio.gz" % self.gen.api_uri
                 ],
                 "cmdline": {
                     "console": "ttyS0 console=ttyS1",
-                    "coreos.first_boot": "",
-                    "coreos.oem.id": "pxe",
-                    "coreos.config.url": "%s/ignition?uuid=${uuid}&mac=${net0/mac:hexhyp}" %
+                    "flatcar.first_boot": "",
+                    "flatcar.oem.id": "pxe",
+                    "flatcar.config.url": "%s/ignition?uuid=${uuid}&mac=${net0/mac:hexhyp}" %
                                          self.gen.api_uri
                 }
             },

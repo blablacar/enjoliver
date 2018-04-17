@@ -7,7 +7,7 @@ ACI=$(PROJECT)/aci
 
 DEBIAN=debian
 UPX=upx
-TARGET=container-linux
+TARGET=flatcar
 
 default: install
 

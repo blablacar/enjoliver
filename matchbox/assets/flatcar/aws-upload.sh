@@ -11,15 +11,15 @@ VERSION=$(readlink serve)
 COMMITID=$(git log --pretty=format:'%h' -n 1)
 
 cd ${VERSION}
-aws s3 cp coreos_production_image.bin s3://bbc-coreos-container-linux/${VERSION}/${COMMITID}.raw
+aws s3 cp flatcar_production_image.bin s3://bbc-flatcar-container-linux/${VERSION}/${COMMITID}.raw
 cd -
 
 cat << EOF > container.json
 {
-  "Description": "CoreOS Container Linux ${VERSION}:${COMMITID}",
+  "Description": "Flatcar Linux ${VERSION}:${COMMITID}",
   "Format": "raw",
   "UserBucket": {
-    "S3Bucket": "bbc-coreos-container-linux",
+    "S3Bucket": "bbc-flatcar-container-linux",
     "S3Key": "${VERSION}/${COMMITID}.raw"
   }
 }

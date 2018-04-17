@@ -15,24 +15,24 @@ type BootInfo struct {
 }
 
 const (
-	coreosConfigUrl = "coreos.config.url="
+	flatcarConfigUrl = "flatcar.config.url="
 	uuidField       = "uuid="
 	macField        = "mac="
 	rawQueryPrefix  = "REQUEST_RAW_QUERY="
 )
 
-// in the /proc/cmdline parse the line to get the coreos config url
-func getCoreosConfigUrl(b []byte) (string, error) {
+// in the /proc/cmdline parse the line to get the flatcar config url
+func getFlatcarConfigUrl(b []byte) (string, error) {
 	cmdline := string(b)
-	glog.V(2).Infof("get %s in %q", coreosConfigUrl, cmdline)
+	glog.V(2).Infof("get %s in %q", flatcarConfigUrl, cmdline)
 	for i, word := range strings.Fields(cmdline) {
-		if strings.Contains(word, coreosConfigUrl) {
-			line := strings.Split(word, coreosConfigUrl)[1]
-			glog.V(2).Infof("found %q at word %d", coreosConfigUrl, i)
+		if strings.Contains(word, flatcarConfigUrl) {
+			line := strings.Split(word, flatcarConfigUrl)[1]
+			glog.V(2).Infof("found %q at word %d", flatcarConfigUrl, i)
 			return line, nil
 		}
 	}
-	return "", fmt.Errorf("Cannot find %q", coreosConfigUrl)
+	return "", fmt.Errorf("Cannot find %q", flatcarConfigUrl)
 }
 
 // randomID is the current boot ID
@@ -91,9 +91,9 @@ func (c *Config) ParseCommandLine() (bootInfo BootInfo, err error) {
 		glog.Errorf("fail to read %s", err)
 		return bootInfo, err
 	}
-	url, err := getCoreosConfigUrl(b)
+	url, err := getFlatcarConfigUrl(b)
 	if err != nil {
-		glog.Errorf("fail to get CoreOS Config Url %s", err)
+		glog.Errorf("fail to get Flatcar Config Url %s", err)
 		return bootInfo, err
 	}
 	return c.getBootInfoFromUrl(url)

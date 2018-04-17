@@ -29,7 +29,7 @@ def rkt_stage1_d(path):
         "rktKind": "stage1",
         "rktVersion": "v1",
         "name": "coreos.com/rkt/stage1-coreos",
-        "version": "v1.27.0",
+        "version": "v1.29.0",
         "location": "%s/rkt/stage1-coreos.aci" % path
     }
     try:
@@ -37,7 +37,7 @@ def rkt_stage1_d(path):
     except OSError:
         pass
 
-    with open("%s/stage1.d/coreos.json" % path, "w") as f:
+    with open("%s/stage1.d/flatcar.json" % path, "w") as f:
         json.dump(data, f)
 
 

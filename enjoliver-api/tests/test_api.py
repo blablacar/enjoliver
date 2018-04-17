@@ -215,7 +215,7 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(1, len(json.loads(r.data.decode())))
 
     def test_lifecycle_01(self):
-        r = self.app.get("/lifecycle/coreos-install")
+        r = self.app.get("/lifecycle/flatcar-install")
         self.assertEqual([], json.loads(r.data.decode()))
 
     def test_lifecycle_02(self):
@@ -229,9 +229,9 @@ class TestAPI(unittest.TestCase):
     def test_lifecycle_04(self):
         rawq = "mac=%s&uuid=%s&os=installed" % (
             posts.M01["boot-info"]["mac"].replace(":", "-"), posts.M01["boot-info"]["uuid"])
-        r = self.app.post("/lifecycle/coreos-install/success/%s" % rawq)
+        r = self.app.post("/lifecycle/flatcar-install/success/%s" % rawq)
         self.assertEqual(200, r.status_code)
-        r = self.app.get("/lifecycle/coreos-install")
+        r = self.app.get("/lifecycle/flatcar-install")
         d = json.loads(r.data.decode())
         self.assertEqual(1, len(d))
         self.assertTrue(d[0]["success"])
@@ -239,9 +239,9 @@ class TestAPI(unittest.TestCase):
     def test_lifecycle_04a(self):
         rawq = "mac=%s&uuid=%s&os=installed" % (
             posts.M02["boot-info"]["mac"].replace(":", "-"), posts.M02["boot-info"]["uuid"])
-        r = self.app.post("/lifecycle/coreos-install/fail/%s" % rawq)
+        r = self.app.post("/lifecycle/flatcar-install/fail/%s" % rawq)
         self.assertEqual(200, r.status_code)
-        r = self.app.get("/lifecycle/coreos-install")
+        r = self.app.get("/lifecycle/flatcar-install")
         d = json.loads(r.data.decode())
         self.assertEqual(2, len(d))
         self.assertTrue(d[0]["success"])
@@ -282,7 +282,7 @@ class TestAPI(unittest.TestCase):
     def test_lifecycle_08(self):
         rawq = "mac=%s&uuid=%s&os=installed" % (
             posts.M02["boot-info"]["mac"].replace(":", "-"), posts.M02["boot-info"]["uuid"])
-        r = self.app.post("/lifecycle/coreos-install/success/%s" % rawq)
+        r = self.app.post("/lifecycle/flatcar-install/success/%s" % rawq)
         self.assertEqual(200, r.status_code)
 
     def test_vue_machine(self):

@@ -9,7 +9,7 @@ systemd:
       enable: false
       mask: true
 
-    - name: coreos-metadata-sshkeys@.service
+    - name: flatcar-metadata-sshkeys@.service
       enable: false
       mask: true
 
@@ -461,7 +461,7 @@ storage:
             "stage1-images": "/usr/lib/rkt/stage1-images"
           }
 
-    - path: /etc/rkt/stage1.d/coreos.json
+    - path: /etc/rkt/stage1.d/flatcar.json
       filesystem: root
       mode: 0644
       contents:
@@ -470,7 +470,7 @@ storage:
               "rktKind": "stage1",
               "rktVersion": "v1",
               "name": "coreos.com/rkt/stage1-coreos",
-              "version": "v1.27.0",
+              "version": "v1.29.0",
               "location": "/usr/lib/rkt/stage1-images/stage1-coreos.aci"
           }
 
@@ -520,7 +520,7 @@ storage:
           {{end}}
           {{end}}
 
-    - path: /etc/coreos/update.conf
+    - path: /etc/flatcar/update.conf
       mode: 0644
       filesystem: root
       contents:
@@ -599,7 +599,7 @@ storage:
           set -o pipefail
 
           STATUS=$(curl -f -XPOST "{{.api_uri}}/lifecycle/ignition/{{.request.raw_query}}" \
-                -d @/usr/share/oem/coreos-install.json \
+                -d @/usr/share/oem/flatcar-install.json \
                 -H "Content-Type: application/json" \
                 -w "%{http_code}" -o /dev/null)
 
@@ -622,8 +622,8 @@ storage:
 
           set -xe
 
-          curl -f "{{.api_uri}}/ignition?{{.request.raw_query}}" -o /tmp/coreos-install.json
-          cat /tmp/coreos-install.json | jq -e . > /dev/null
+          curl -f "{{.api_uri}}/ignition?{{.request.raw_query}}" -o /tmp/flatcar-install.json
+          cat /tmp/flatcar-install.json | jq -e . > /dev/null
 
           STRATEGY=$(curl -f "{{.api_uri}}/lifecycle/rolling/{{.request.raw_query}}" | jq -re .strategy ) || {
             exit 0
@@ -659,11 +659,11 @@ storage:
           if [ ${STRATEGY} == "kexec" ]
           then
             kexec --reuse-cmdline \
-                  --append="coreos.first_boot=1 coreos.randomize_disk_guid=${DISK_GUID}" \
+                  --append="flatcar.first_boot=1 flatcar.randomize_disk_guid=${DISK_GUID}" \
                   -l /usr/boot/vmlinuz
           fi
 
-          cp -v /tmp/coreos-install.json /usr/share/oem/coreos-install.json
+          cp -v /tmp/flatcar-install.json /usr/share/oem/flatcar-install.json
 
           systemctl ${STRATEGY}
 
