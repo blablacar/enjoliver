@@ -85,7 +85,7 @@ systemd:
       enable: true
 
     - name: ntpd.service
-      enable: false
+      enable: true
 
     - name: etcd.service
       mask: true
@@ -342,6 +342,9 @@ systemd:
         [Install]
         WantedBy=multi-user.target
 
+    - name: update-engine.service
+      enable: true
+
     - name: rkt-gc.service
       enable: true
       contents: |
@@ -357,10 +360,10 @@ systemd:
       enable: true
       contents: |
         [Timer]
-        OnCalendar=*/4 * * * *
+        OnCalendar=*:0/4
         [Install]
         WantedBy=timers.target
-    
+
     - name: journalctl-verify.service
       enable: true
       contents: |
@@ -492,7 +495,7 @@ storage:
       contents:
         inline: |
           etcd_servers = [ http://127.0.0.1:{{.fleet_etcd_client_port}},{{ .fleet_etcd_member_client_uri_list }} ]
-          metadata = "name={{.dns_attr.shortname}},diskProfile={{.disk_profile}}"
+          metadata = "dc={{.dns_attr.dc}},name={{.dns_attr.shortname}},rack={{.dns_attr.rack}},pos={{.dns_attr.pos}},diskProfile={{.disk_profile}}"
           etcd_cafile=/etc/vault.d/etcd-fleet/client.issuing_ca
           etcd_certfile=/etc/vault.d/etcd-fleet/client.certificate
           etcd_keyfile=/etc/vault.d/etcd-fleet/client.private_key
@@ -584,6 +587,8 @@ storage:
       filesystem: root
       contents:
         inline: |
+          ipmi_devintf
+          sg
           ip_tables
           iptable_nat
           nf_nat
@@ -907,6 +912,19 @@ storage:
       mode: 0600
       filesystem: root
 
+    - path: /etc/ntp.conf
+      mode: 0644
+      filesystem: root
+      contents:
+        inline: |
+          server 0.fr.pool.ntp.org iburst burst
+          server 1.fr.pool.ntp.org iburst burst
+          server 2.fr.pool.ntp.org iburst burst
+          server 3.fr.pool.ntp.org iburst burst
+          restrict default nomodify nopeer noquery limited kod
+          restrict 127.0.0.1
+          restrict [::1]
+
     - path: /etc/profile.d/alias.sh
       mode: 0755
       filesystem: root
@@ -931,18 +949,6 @@ storage:
             --volume data,kind=host,source=/etc/ceph \
             --mount volume=data,target=/etc/ceph \
             --interactive {{.cephtools_image_url}} -- $@
-
-    - path: /etc/profile.d/alias.sh
-      mode: 0755
-      filesystem: root
-      contents:
-        inline: |
-          if [[ $- != *i* ]] ; then
-                   return
-          fi
-          alias ls='ls --color=auto'
-          alias la='ls -la'
-          alias ll='ls -ll'
 
     - path: /etc/haproxy/haproxy.cfg
       mode: 0755
@@ -1001,6 +1007,23 @@ storage:
               user:
                 client-certificate: /etc/vault.d/kubernetes/kube-apiserver.certificate
                 client-key: /etc/vault.d/kubernetes/kube-apiserver.private_key
+
+    - path: /etc/sysctl.d/10-net.ipv4.neigh.conf
+      mode: 0644
+      filesystem: root
+      contents:
+        inline: |
+          net.ipv4.neigh.default.gc_thresh1=1024
+          net.ipv4.neigh.default.gc_thresh2=2048
+          net.ipv4.neigh.default.gc_thresh3=4096
+          net.ipv4.neigh.default.gc_stale_time=86400
+
+    - path: /etc/sysctl.d/10-net.ipv4.tcp.conf
+      mode: 0644
+      filesystem: root
+      contents:
+        inline: |
+          net.ipv4.tcp_tw_reuse=1
 
 networkd:
   units:
