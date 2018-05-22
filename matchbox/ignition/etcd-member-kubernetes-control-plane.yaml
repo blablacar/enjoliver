@@ -395,7 +395,7 @@ systemd:
           /etc/vault.d/etcd-%i/peer.certificate \
           /etc/vault.d/etcd-%i/peer.private_key \
           /etc/vault.d/etcd-%i/peer.issuing_ca
-        ExecStart=/usr/bin/etcd \
+        ExecStart=/usr/bin/ionice -c2 -n0 /usr/bin/etcd \
           --cert-file /etc/vault.d/etcd-%i/client.certificate \
           --key-file /etc/vault.d/etcd-%i/client.private_key \
           --trusted-ca-file /etc/vault.d/etcd-%i/client.issuing_ca \
@@ -405,8 +405,11 @@ systemd:
           --peer-key-file /etc/vault.d/etcd-%i/peer.private_key \
           --peer-trusted-ca-file /etc/vault.d/etcd-%i/peer.issuing_ca \
           --peer-client-cert-auth \
+          --election-timeout 10000 \
+          --heartbeat-interval 1000 \
           --auto-compaction-retention=12
-        RestartSec=20s
+        RestartSec=60s
+        TimeoutSec=60s
         Restart=on-failure
         LimitNOFILE=65826
 
