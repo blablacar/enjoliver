@@ -105,12 +105,12 @@ config:
 	touch $(HOME)/.config/enjoliver/config.env
 	touch $(HOME)/.config/enjoliver/config.json
 
-container_linux: acserver
-	$(MAKE) -C aci/aci-container-linux install
+flatcar: acserver
+	$(MAKE) -C aci/aci-flatcar install
 	./runtime/runtime.rkt run --set-env=COMMIT_ID=$(shell git log --pretty=format:'%h' -n 1) \
 	  --volume enjoliver,kind=host,source=$(CWD),readOnly=false \
       --stage1-path=$(CWD)/runtime/rkt/stage1-fly.aci --insecure-options=all \
-      --interactive enjoliver.local/container-linux:latest
+      --interactive enjoliver.local/flatcar:latest
 	pkill -F runtime/acserver.pid || true
 
 dev_setup:
@@ -124,7 +124,7 @@ dev_setup:
 	su -m $(MY_USER) -c "make -C $(CWD) front"
 	su -m $(MY_USER) -c "make -C $(CWD) assets"
 	$(MAKE) -C $(CWD) aci
-	$(MAKE) -C $(CWD) container_linux
+	$(MAKE) -C $(CWD) flatcar
 	su -m $(MY_USER) -c "make -C $(CWD) validate"
 	su -m $(MY_USER) -c "make -C $(CWD) config"
 	chown -R $(MY_USER): $(CWD)

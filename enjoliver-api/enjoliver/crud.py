@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker, Session, joinedload
 from enjoliver.db import session_commit
 from enjoliver import tools
 from enjoliver.model import MachineInterface, Machine, Schedule, ScheduleRoles, LifecycleIgnition, \
-    LifecycleCoreosInstall, LifecycleRolling
+    LifecycleFlatcarInstall, LifecycleRolling
 
 logger = logging.getLogger(__name__)
 
@@ -53,11 +53,11 @@ class InjectLifecycle:
 
         self.session.commit()
 
-    def refresh_lifecycle_coreos_install(self, success: bool):
-        lifecycle = self.session.query(LifecycleCoreosInstall).filter(
-            LifecycleCoreosInstall.machine_id == self.machine.id).first()
+    def refresh_lifecycle_flatcar_install(self, success: bool):
+        lifecycle = self.session.query(LifecycleFlatcarInstall).filter(
+            LifecycleFlatcarInstall.machine_id == self.machine.id).first()
         if not lifecycle:
-            lifecycle = LifecycleCoreosInstall(
+            lifecycle = LifecycleFlatcarInstall(
                 machine_id=self.machine.id,
                 success=success
             )
@@ -125,9 +125,9 @@ class FetchLifecycle:
                 })
         return status
 
-    def get_coreos_install_status(self, mac: str):
+    def get_flatcar_install_status(self, mac: str):
         with session_commit(sess_maker=self.sess_maker) as session:
-            lci = session.query(LifecycleCoreosInstall)\
+            lci = session.query(LifecycleFlatcarInstall)\
                 .join(Machine)\
                 .join(MachineInterface)\
                 .filter(MachineInterface.mac == mac)\
@@ -137,11 +137,11 @@ class FetchLifecycle:
             else:
                 return None
 
-    def get_all_coreos_install_status(self):
+    def get_all_flatcar_install_status(self):
         life_status_list = []
         with session_commit(sess_maker=self.sess_maker) as session:
             for machine in session.query(Machine)\
-                    .join(LifecycleCoreosInstall)\
+                    .join(LifecycleFlatcarInstall)\
                     .join(MachineInterface)\
                     .filter(MachineInterface.as_boot == True):
 
@@ -149,9 +149,9 @@ class FetchLifecycle:
                     "mac": machine.interfaces[0].mac,
                     "fqdn": machine.interfaces[0].fqdn,
                     "cidrv4": machine.interfaces[0].cidrv4,
-                    "success": machine.lifecycle_coreos_install[0].success,
-                    "created_date": machine.lifecycle_coreos_install[0].created_date,
-                    "updated_date": machine.lifecycle_coreos_install[0].updated_date
+                    "success": machine.lifecycle_flatcar_install[0].success,
+                    "created_date": machine.lifecycle_flatcar_install[0].created_date,
+                    "updated_date": machine.lifecycle_flatcar_install[0].updated_date
                 })
         return life_status_list
 

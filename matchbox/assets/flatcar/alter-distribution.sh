@@ -7,9 +7,9 @@ test ${VERSION}
 test ${COMMIT_ID}
 
 cd $(dirname $0)
-COREOS_DIRECTORY=$(pwd -P)
-ASSETS_DIRECTORY=$(dirname ${COREOS_DIRECTORY})
-export VERSION_DIR=${COREOS_DIRECTORY}/${VERSION}
+FLATCAR_DIRECTORY=$(pwd -P)
+ASSETS_DIRECTORY=$(dirname ${FLATCAR_DIRECTORY})
+export VERSION_DIR=${FLATCAR_DIRECTORY}/${VERSION}
 
 cd ${VERSION_DIR}
 export USR_A=${VERSION_DIR}/usr-a
@@ -19,10 +19,10 @@ export VERSION
 
 mkdir -pv {squashfs,initrd} ${USR_A} ${BOOT} ${ROOTFS}
 
-bzip2 -fdk coreos_production_image.bin.bz2
-${COREOS_DIRECTORY}/disk.py rw
+bzip2 -fdk flatcar_production_image.bin.bz2
+${FLATCAR_DIRECTORY}/disk.py rw
 
-LOOP=$(losetup --find --show coreos_production_image.bin)
+LOOP=$(losetup --find --show flatcar_production_image.bin)
 partprobe ${LOOP}
 
 set +e
@@ -34,9 +34,9 @@ set -e
 mount ${LOOP}p9 ${ROOTFS}
 mount ${LOOP}p3 ${USR_A}
 mount ${LOOP}p1 ${BOOT}
-gunzip -c --force coreos_production_pxe_image.cpio.gz > coreos_production_pxe_image.cpio
+gunzip -c --force flatcar_production_pxe_image.cpio.gz > flatcar_production_pxe_image.cpio
 cd initrd
-cpio -id < ../coreos_production_pxe_image.cpio
+cpio -id < ../flatcar_production_pxe_image.cpio
 cd ../squashfs
 unsquashfs -no-progress ../initrd/usr.squashfs
 
@@ -55,7 +55,7 @@ _upx_in_fs() {
     done
 }
 
-# CWD == ~/matchbox/assets/coreos/${VERSION}/squashfs
+# CWD == ~/matchbox/assets/flatcar/${VERSION}/squashfs
 
 EXCLUDES="--exclude rootfs/dgr --exclude rootfs/etc --exclude rootfs/tmp --exclude rootfs/run --exclude rootfs/sys"
 
@@ -131,7 +131,7 @@ SOCAT_ACI=$(ls ${ACI_PATH}/socat/socat-*-linux-amd64.aci | head -n 1)
 tar -C squashfs-root -xvf ${SOCAT_ACI} rootfs/usr/bin --strip 2 ${EXCLUDES}
 tar -C ${USR_A} -xvf ${SOCAT_ACI} rootfs/usr/bin --strip 2 ${EXCLUDES}
 
-for b in /bin/locksmithctl /bin/coreos-cloudinit
+for b in /bin/locksmithctl /bin/flatcar-cloudinit
 do
     _upx_in_fs ${b}
 done
@@ -145,14 +145,14 @@ echo -n "{\"release\": \"${VERSION}\", \"alter_timestamp\": \"$(date +%s)\", \"c
 
 mkdir -pv ${ROOTFS}/etc/systemd/system/multi-user.target.wants ${ROOTFS}/etc/systemd/system/multi-user.target.requires
 
-cp -v ${COREOS_DIRECTORY}/oem-cloudinit.service ${ROOTFS}/etc/systemd/system/oem-cloudinit.service
+cp -v ${FLATCAR_DIRECTORY}/oem-cloudinit.service ${ROOTFS}/etc/systemd/system/oem-cloudinit.service
 cd ${ROOTFS}/etc/systemd/system/multi-user.target.wants
 ln -svf /etc/systemd/system/oem-cloudinit.service oem-cloudinit.service
 cd -
 
-cp -v ${COREOS_DIRECTORY}/coreos-metadata-sshkeys@.service ${ROOTFS}/etc/systemd/system/coreos-metadata-sshkeys@.service
+cp -v ${FLATCAR_DIRECTORY}/flatcar-metadata-sshkeys@.service ${ROOTFS}/etc/systemd/system/flatcar-metadata-sshkeys@.service
 cd ${ROOTFS}/etc/systemd/system/multi-user.target.requires
-ln -svf /etc/systemd/system/coreos-metadata-sshkeys@.service coreos-metadata-sshkeys@core.service
+ln -svf /etc/systemd/system/flatcar-metadata-sshkeys@.service flatcar-metadata-sshkeys@core.service
 cd -
 
 sync
@@ -160,22 +160,22 @@ sync
 umount ${ROOTFS}
 
 umount ${USR_A}
-${COREOS_DIRECTORY}/disk_util --disk_layout=base verity --root_hash=${VERSION_DIR}/coreos_production_image_verity.txt ${VERSION_DIR}/coreos_production_image.bin
-printf %s "$(cat ${VERSION_DIR}/coreos_production_image_verity.txt)" | \
-        dd of=${BOOT}/coreos/vmlinuz-a conv=notrunc seek=64 count=64 bs=1 status=none
+${FLATCAR_DIRECTORY}/disk_util --disk_layout=base verity --root_hash=${VERSION_DIR}/flatcar_production_image_verity.txt ${VERSION_DIR}/flatcar_production_image.bin
+printf %s "$(cat ${VERSION_DIR}/flatcar_production_image_verity.txt)" | \
+        dd of=${BOOT}/flatcar/vmlinuz-a conv=notrunc seek=64 count=64 bs=1 status=none
 sync
 
 umount ${BOOT}
 losetup -d ${LOOP}
 
-${COREOS_DIRECTORY}/disk.py ro
-bzip2 -fzk ${VERSION_DIR}/coreos_production_image.bin -9
+${FLATCAR_DIRECTORY}/disk.py ro
+bzip2 -fzk ${VERSION_DIR}/flatcar_production_image.bin -9
 
-cp -v ${COREOS_DIRECTORY}/coreos-install squashfs-root/bin/coreos-install
+cp -v ${FLATCAR_DIRECTORY}/flatcar-install squashfs-root/bin/flatcar-install
 
 mksquashfs squashfs-root/ ../initrd/usr.squashfs -noappend -always-use-fragments
 cd ../initrd
-find . | cpio -o -H newc | gzip -9 > ../coreos_production_pxe_image.cpio.gz
+find . | cpio -o -H newc | gzip -9 > ../flatcar_production_pxe_image.cpio.gz
 cd ../
 
-rm -rf squashfs initrd coreos_production_pxe_image.cpio ${USR_A}
+rm -rf squashfs initrd flatcar_production_pxe_image.cpio ${USR_A}

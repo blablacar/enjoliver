@@ -32,7 +32,7 @@ During the lifecycle of the Kubernetes cluster, rolling updates are **fast** and
 Each node can be re-installed and re-join the cluster.
 
 
-Each minute, every machine reports the content of `/usr/share/oem/coreos-install.json` to the enjoliver API `lifecycle/ignition/`
+Each minute, every machine reports the content of `/usr/share/oem/flatcar-install.json` to the enjoliver API `lifecycle/ignition/`
 Enjoliver will query matchbox and compare the content of the current ignition report and the desired ignition provided by matchbox.
 The result will be stored in the database and returned to the machine.
 

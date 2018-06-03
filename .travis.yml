@@ -43,7 +43,7 @@ matrix:
 #before_script:
 #  - make assets
 #  - sudo -E make aci_core
-#  - sudo -E make container_linux
+#  - sudo -E make flatcar
 #  - make config
 
 #script:

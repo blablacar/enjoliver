@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2013 The CoreOS Authors. All rights reserved.
+# Copyright (c) 2013 The Flatcar Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -16,18 +16,18 @@ which gpg >/dev/null || { echo 'Missing gpg!' >&2 ; exit 1 ; }
 # Everything we do should be user-access only!
 umask 077
 
-if grep -q "^ID=coreos$" /etc/os-release; then
+if grep -q "^ID=flatcar$" /etc/os-release; then
     source /etc/os-release
-    [[ -f /usr/share/coreos/update.conf ]] && source /usr/share/coreos/update.conf
-    [[ -f /etc/coreos/update.conf ]] && source /etc/coreos/update.conf
+    [[ -f /usr/share/flatcar/update.conf ]] && source /usr/share/flatcar/update.conf
+    [[ -f /etc/flatcar/update.conf ]] && source /etc/flatcar/update.conf
 fi
 
 # Fall back on the current stable if os-release isn't useful
 : ${VERSION_ID:=current}
 CHANNEL_ID=${GROUP:-stable}
 
-if [[ -e /usr/share/coreos/release ]]; then
-    BOARD=$(gawk --field-separator '=' '/COREOS_RELEASE_BOARD=/ { print $2 }' /usr/share/coreos/release)
+if [[ -e /usr/share/flatcar/release ]]; then
+    BOARD=$(gawk --field-separator '=' '/FLATCAR_RELEASE_BOARD=/ { print $2 }' /usr/share/flatcar/release)
 fi
 
 BOARD=${BOARD:-"amd64-usr"}
@@ -42,9 +42,9 @@ done
 
 USAGE="Usage: $0 [-V version] [-d /dev/device]
 Options:
-    -d DEVICE   Install CoreOS to the given device.
+    -d DEVICE   Install Flatcar to the given device.
     -V VERSION  Version to install (e.g. current) [default: ${VERSION_ID}]
-    -B BOARD    CoreOS board to use [default: ${BOARD}]
+    -B BOARD    Flatcar board to use [default: ${BOARD}]
     -C CHANNEL  Release channel to use (e.g. beta) [default: ${CHANNEL_ID}]
     -o OEM      OEM type to install (e.g. ami) [default: ${OEM_ID:-(none)}]
     -c CLOUD    Insert a cloud-init config to be executed on boot.
@@ -55,13 +55,13 @@ Options:
     -n          Copy generated network units to the root partition.
     -h          This ;-)
 
-This tool installs CoreOS on a block device. If you PXE booted CoreOS on a
+This tool installs Flatcar on a block device. If you PXE booted Flatcar on a
 machine then use this tool to make a permanent install.
 "
 
 # Image signing key:
 # pub   4096R/93D2DCB4 2013-09-06
-# uid       [ unknown] CoreOS Buildbot (Offical Builds) <buildbot@coreos.com>
+# uid       [ unknown] Flatcar Buildbot (Offical Builds) <buildbot@flatcar.com>
 # sub   4096R/74E7E361 2013-09-06 [expired: 2014-09-06]
 # sub   4096R/E5676EFC 2014-09-08 [expired: 2015-09-08]
 # sub   4096R/1CB5FA26 2015-08-31 [expires: 2017-08-30]
@@ -359,13 +359,13 @@ if [[ -n "${CLOUDINIT}" ]]; then
         exit 1
     fi
 
-    if type -P coreos-cloudinit >/dev/null; then
-        if ! coreos-cloudinit -from-file="${CLOUDINIT}" -validate; then
+    if type -P flatcar-cloudinit >/dev/null; then
+        if ! flatcar-cloudinit -from-file="${CLOUDINIT}" -validate; then
             echo "$0: Cloud config file (${CLOUDINIT}) is not valid." >&2
             exit 1
         fi
     else
-        echo "$0: coreos-cloudinit not found. Could not validate config. Continuing..." >&2
+        echo "$0: flatcar-cloudinit not found. Could not validate config. Continuing..." >&2
     fi
 fi
 
@@ -377,9 +377,9 @@ if [[ -n "${IGNITION}" ]]; then
 fi
 
 if [[ -n "${OEM_ID}" ]]; then
-    IMAGE_NAME="coreos_production_${OEM_ID}_image.bin.bz2"
+    IMAGE_NAME="flatcar_production_${OEM_ID}_image.bin.bz2"
 else
-    IMAGE_NAME="coreos_production_image.bin.bz2"
+    IMAGE_NAME="flatcar_production_image.bin.bz2"
 fi
 
 # for compatibility with old versions that didn't support channels
@@ -389,19 +389,19 @@ if [[ "${VERSION_ID}" =~ ^(alpha|beta|stable)$ ]]; then
 fi
 
 if [[ -z "${BASE_URL}" ]]; then
-    BASE_URL="https://${CHANNEL_ID}.release.core-os.net/${BOARD}"
+    BASE_URL="https://${CHANNEL_ID}.release.flatcar-linux.net/${BOARD}"
 fi
 
 # if the version is "current", resolve the actual version number
 if [[ "${VERSION_ID}" == "current" ]]; then
     VERSIONTXT_URL="${BASE_URL}/${VERSION_ID}/version.txt"
     VERSION_ID=$(wget --quiet -O - "${VERSIONTXT_URL}" | \
-        gawk --field-separator '=' '/COREOS_VERSION=/ { print $2 }' ||:)
+        gawk --field-separator '=' '/FLATCAR_VERSION=/ { print $2 }' ||:)
     if [[ -z "${VERSION_ID}" ]]; then
         echo "$0: version.txt unavailable: ${VERSIONTXT_URL}" >&2
         exit 1
     fi
-    echo "Current version of CoreOS ${CHANNEL_ID} is ${VERSION_ID}"
+    echo "Current version of Flatcar ${CHANNEL_ID} is ${VERSION_ID}"
 fi
 
 IMAGE_URL="${BASE_URL}/${VERSION_ID}/${IMAGE_NAME}"
@@ -419,7 +419,7 @@ if ! wget --spider --quiet "${SIG_URL}"; then
 fi
 
 # Pre-flight checks pass, lets get this party started!
-WORKDIR=$(mktemp --tmpdir -d coreos-install.XXXXXXXXXX)
+WORKDIR=$(mktemp --tmpdir -d flatcar-install.XXXXXXXXXX)
 trap "error_output ; rm -rf '${WORKDIR}'" EXIT
 
 # Setup GnuPG for verifying the image signature
@@ -470,8 +470,8 @@ if [[ -n "${CLOUDINIT}" ]] || [[ -n "${COPY_NET}" ]]; then
 
     if [[ -n "${CLOUDINIT}" ]]; then
       echo "Installing cloud-config..."
-      mkdir -p "${WORKDIR}/rootfs/var/lib/coreos-install"
-      cp "${CLOUDINIT}" "${WORKDIR}/rootfs/var/lib/coreos-install/user_data"
+      mkdir -p "${WORKDIR}/rootfs/var/lib/flatcar-install"
+      cp "${CLOUDINIT}" "${WORKDIR}/rootfs/var/lib/flatcar-install/user_data"
     fi
 
     if [[ -n "${COPY_NET}" ]]; then
@@ -494,8 +494,8 @@ if [[ -n "${IGNITION}" ]]; then
     trap "error_output ; umount '${WORKDIR}/oemfs' && rm -rf '${WORKDIR}'" EXIT
 
     echo "Installing Ignition config ${IGNITION}..."
-    cp "${IGNITION}" "${WORKDIR}/oemfs/coreos-install.json"
-    echo 'set linux_append="$linux_append coreos.config.url=oem:///coreos-install.json"' >> "${WORKDIR}/oemfs/grub.cfg"
+    cp "${IGNITION}" "${WORKDIR}/oemfs/flatcar-install.json"
+    echo 'set linux_append="$linux_append flatcar.config.url=oem:///flatcar-install.json"' >> "${WORKDIR}/oemfs/grub.cfg"
 
     umount "${WORKDIR}/oemfs"
     trap "error_output ; rm -rf '${WORKDIR}'" EXIT
@@ -504,4 +504,4 @@ fi
 rm -rf "${WORKDIR}"
 trap - EXIT
 
-echo "Success! CoreOS ${CHANNEL_ID} ${VERSION_ID}${OEM_ID:+ (${OEM_ID})} is installed on ${DEVICE}"
+echo "Success! Flatcar ${CHANNEL_ID} ${VERSION_ID}${OEM_ID:+ (${OEM_ID})} is installed on ${DEVICE}"

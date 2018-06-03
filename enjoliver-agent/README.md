@@ -1,7 +1,7 @@
 # Enjoliver Agent
 
 
-The enjoliver agent is a daemon running on each CoreOS container linux node of the Kubernetes cluster.
+The enjoliver agent is a daemon running on each Flatcar linux node of the Kubernetes cluster.
 
 The purpose of this daemon is provide local information.
 

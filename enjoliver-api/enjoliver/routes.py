@@ -336,7 +336,7 @@ def register_routes(
                 type: string
         """
         app.logger.info("%s %s %s" % (request.method, request.remote_addr, request.url))
-        if ec.coreos_install_lock_seconds > 0:
+        if ec.flatcar_install_lock_seconds > 0:
             lock = cache.get("lock-install")
             if lock is not None:
                 app.logger.warning("Locked by %s" % lock)
@@ -345,7 +345,7 @@ def register_routes(
                     MachineStates.os_installation_denied
                 )
                 return Response(response="Locked by %s" % lock, status=403)
-            cache.set("lock-install", request_raw_query, timeout=ec.coreos_install_lock_seconds)
+            cache.set("lock-install", request_raw_query, timeout=ec.flatcar_install_lock_seconds)
             app.logger.info("Granted to %s" % request_raw_query)
 
         registry.machine_state.update(
@@ -390,33 +390,33 @@ def register_routes(
             app.logger.warning("404 for /ipxe")
             return "404", 404
 
-    @app.route("/lifecycle/coreos-install", methods=["GET"])
-    def lifecycle_get_coreos_install_status():
+    @app.route("/lifecycle/flatcar-install", methods=["GET"])
+    def lifecycle_get_flatcar_install_status():
         """
-        Lifecycle CoreOS Install
-        Get all the CoreOS Install status
+        Lifecycle Flatcar Install
+        Get all the Flatcar Install status
         ---
         tags:
           - lifecycle
         responses:
           200:
-            description: CoreOS Install status list
+            description: Flatcar Install status list
             schema:
                 type: list
         """
-        return jsonify(crud.FetchLifecycle(sess_maker=sess_maker).get_all_coreos_install_status())
+        return jsonify(crud.FetchLifecycle(sess_maker=sess_maker).get_all_flatcar_install_status())
 
-    @app.route("/lifecycle/coreos-install/<string:status>/<string:request_raw_query>", methods=["POST"])
-    def report_lifecycle_coreos_install(status, request_raw_query):
+    @app.route("/lifecycle/flatcar-install/<string:status>/<string:request_raw_query>", methods=["POST"])
+    def report_lifecycle_flatcar_install(status, request_raw_query):
         """
-        Lifecycle CoreOS Install
-        Report the status of a CoreOS install by MAC
+        Lifecycle Flatcar Install
+        Report the status of a Flatcar install by MAC
         ---
         tags:
           - lifecycle
         responses:
           200:
-            description: CoreOS Install report
+            description: Flatcar Install report
             schema:
                 type: dict
         """
@@ -431,7 +431,7 @@ def register_routes(
 
         with session_commit(sess_maker=sess_maker) as session:
             inject = crud.InjectLifecycle(session, request_raw_query=request_raw_query)
-            inject.refresh_lifecycle_coreos_install(success)
+            inject.refresh_lifecycle_flatcar_install(success)
 
         registry.machine_state.update(
             mac=tools.get_mac_from_raw_query(request_raw_query),

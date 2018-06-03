@@ -70,12 +70,12 @@ Features: -TPM +SDJOURNAL
 		t.Errorf("fail to get version: %s", v)
 	}
 
-	unameOutput := "4.11.9-coreos\n"
+	unameOutput := "4.11.9-flatcar\n"
 	v, err = getStringInTable(unameOutput, kernelVersion)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	if v != "4.11.9-coreos" {
+	if v != "4.11.9-flatcar" {
 		t.Errorf("fail to get version: %s", v)
 	}
 
@@ -102,7 +102,7 @@ Copyright 2000-2017 Willy Tarreau <willy@haproxy.org>
 
 	socatOutput := `[64604.961670] socat[18]: socat by Gerhard Rieger and contributors - see www.dest-unreach.org
 [64604.962631] socat[18]: socat version 1.7.3.2 on Dec  1 2017 13:26:02
-[64604.963345] socat[18]:    running on Linux version #1 SMP Wed Nov 8 08:09:32 UTC 2017, release 4.14.0-rc8-coreos, machine x86_64
+[64604.963345] socat[18]:    running on Linux version #1 SMP Wed Nov 8 08:09:32 UTC 2017, release 4.14.0-rc8-flatcar, machine x86_64
 [64604.965175] socat[18]: features:
 [64604.965761] socat[18]:   #define WITH_STDIO 1
 [64604.966496] socat[18]:   #define WITH_FDNUM 1

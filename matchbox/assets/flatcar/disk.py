@@ -31,7 +31,7 @@ if __name__ == '__main__':
     if not version:
         raise EnvironmentError("VERSION environment variable is not fill")
 
-    image_path = os.path.join(FILE_DIR, version, "coreos_production_image.bin")
+    image_path = os.path.join(FILE_DIR, version, "flatcar_production_image.bin")
     current_flag = get_current_flag(image_path)
     if current_flag != READ_WRITE and current_flag != READ_ONLY:
         raise IOError("%s flag at %d is incoherent: %r ; should be %r or %r" % (

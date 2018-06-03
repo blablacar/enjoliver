@@ -1,19 +1,19 @@
-VERSION=1576.5.0
+VERSION=1632.3.0
 
 SERVE=serve
 
-CHANNEL=https://stable.release.core-os.net/amd64-usr
-VMLINUZ=coreos_production_pxe.vmlinuz
-CPIO=coreos_production_pxe_image.cpio.gz
+CHANNEL=https://stable.release.flatcar-linux.net/amd64-usr
+VMLINUZ=flatcar_production_pxe.vmlinuz
+CPIO=flatcar_production_pxe_image.cpio.gz
 TXT=version.txt
-BZ2=coreos_production_image.bin.bz2
+BZ2=flatcar_production_image.bin.bz2
 
 KERNEL=$(addprefix $(VERSION)/, $(VMLINUZ))
 INITRD=$(addprefix $(VERSION)/, $(CPIO))
 TEXT_VERSION=$(addprefix $(VERSION)/, $(TXT))
 IMAGE=$(addprefix $(VERSION)/, $(BZ2))
 
-ASC=CoreOS_Image_Signing_Key.asc
+ASC=Flatcar_Image_Signing_Key.asc
 
 KEY=$(addprefix $(VERSION)/, $(ASC))
 GPG=gpg
@@ -25,7 +25,7 @@ $(VERSION):
 	mkdir -pv $(VERSION)
 
 $(KEY): $(VERSION)
-	curl -Lf https://coreos.com/security/image-signing-key/$(ASC) -o $(KEY)
+	curl -Lf https://flatcar-linux.org/security/image-signing-key/$(ASC) -o $(KEY)
 	$(GPG) --logger-fd 1 --import < $(KEY)
 
 $(KERNEL): $(KEY) $(VERSION)

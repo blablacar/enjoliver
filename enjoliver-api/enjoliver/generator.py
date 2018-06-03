@@ -151,10 +151,10 @@ class GenerateProfile(GenerateCommon):
             "kernel": "%s%s" % (uri, ec.kernel),
             "initrd": ["%s%s" % (uri, ec.initrd)],
             "cmdline": {
-                "coreos.config.url":
+                "flatcar.config.url":
                     "%s/%s?uuid=${uuid}&mac=${net0/mac:hexhyp}" % (self.api_uri, path_for_ignition),
-                "coreos.first_boot": "",
-                "coreos.oem.id": "pxe",
+                "flatcar.first_boot": "",
+                "flatcar.oem.id": "pxe",
                 "console": "ttyS0 console=ttyS1",
             }
         }

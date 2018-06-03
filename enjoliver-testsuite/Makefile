@@ -65,6 +65,9 @@ fclean: clean gci gc
 check_euid_it_plans_enjolivage_disk_2_nodes: runtime
 	pytest-3 -x --pdb -v -k TestKVMK8sEnjolivageDisk1
 
+check_euid_it_plans_lifecycle: runtime
+	pytest-3 -x --pdb -v -k TestKVMK8SEnjolivageDiskLifecycleLifecycle0
+
 $(KKK):
 	@echo Run as USER
 	test $(ROOT)

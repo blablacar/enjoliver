@@ -189,20 +189,20 @@ storage:
                   #done
 
                   udevadm settle
-                  #coreos-install -d /dev/sda -V current -C stable -i ${NEW_IGNITION} \
-                  #  {{if index . "coreos_install_base_url"}} -b {{.coreos_install_base_url}}{{end}} || {
+                  #flatcar-install -d /dev/sda -V current -C stable -i ${NEW_IGNITION} \
+                  #  {{if index . "flatcar_install_base_url"}} -b {{.flatcar_install_base_url}}{{end}} || {
                   #  curl -f -XPOST \
-                  #    "${API_URI}/lifecycle/coreos-install/fail/${QUERY}"
+                  #    "${API_URI}/lifecycle/flatcar-install/fail/${QUERY}"
                   #  exit 2
                   #}
-                  curl -f -XPOST "${API_URI}/lifecycle/coreos-install/success/${QUERY}"
+                  curl -f -XPOST "${API_URI}/lifecycle/flatcar-install/success/${QUERY}"
                   sync
                   systemctl reboot
               fi
               sleep ${TIMER}
           done
 
-    - path: /etc/coreos/update.conf
+    - path: /etc/flatcar/update.conf
       mode: 0644
       filesystem: root
       contents:
@@ -220,7 +220,7 @@ storage:
             "stage1-images": "/usr/lib/rkt/stage1-images"
           }
 
-    - path: /etc/rkt/stage1.d/coreos.json
+    - path: /etc/rkt/stage1.d/flatcar.json
       filesystem: root
       mode: 0644
       contents:
@@ -229,7 +229,7 @@ storage:
               "rktKind": "stage1",
               "rktVersion": "v1",
               "name": "coreos.com/rkt/stage1-coreos",
-              "version": "v1.27.0",
+              "version": "v1.29.0",
               "location": "/usr/lib/rkt/stage1-images/stage1-coreos.aci"
           }
 

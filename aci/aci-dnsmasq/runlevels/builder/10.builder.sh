@@ -18,5 +18,5 @@ mkdir -pv ${TFTP_DIR}
 curl -fL -o ${TFTP_DIR}/undionly.kpxe http://boot.ipxe.org/undionly.kpxe
 ln -sv ${TFTP_DIR}/undionly.kpxe ${TFTP_DIR}/undionly.kpxe.0
 
-curl -fL -o ${TFTP_DIR}/grub.efi https://stable.release.core-os.net/amd64-usr/current/coreos_production_pxe_grub.efi
+curl -fL -o ${TFTP_DIR}/grub.efi https://stable.release.flatcar-linux.net/amd64-usr/current/flatcar_production_pxe_grub.efi
 

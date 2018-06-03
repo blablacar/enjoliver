@@ -98,11 +98,11 @@ class EnjoliverConfig:
         self.assets_server_uri = self.config_override("assets_server_uri", None)
         self.kernel = self.config_override(
             "kernel",
-            "/assets/coreos/serve/coreos_production_pxe.vmlinuz"
+            "/assets/flatcar/serve/flatcar_production_pxe.vmlinuz"
         )
         self.initrd = self.config_override(
             "initrd",
-            "/assets/coreos/serve/coreos_production_pxe_image.cpio.gz"
+            "/assets/flatcar/serve/flatcar_production_pxe_image.cpio.gz"
         )
 
         # Scheduler
@@ -198,8 +198,8 @@ class EnjoliverConfig:
                                                       "%s/gunicorn.pid" % os.path.dirname(__file__))
         self.plan_pid_file = self.config_override("plan_pid_file", "%s/plan.pid" % os.path.dirname(__file__))
 
-        self.coreos_install_base_url = self.config_override("coreos_install_base_url", None)
-        self.coreos_install_lock_seconds = self.config_override("coreos_install_lock_seconds", 29)
+        self.flatcar_install_base_url = self.config_override("flatcar_install_base_url", None)
+        self.flatcar_install_lock_seconds = self.config_override("flatcar_install_lock_seconds", 29)
 
         self.nameservers = self.config_override("nameservers", ["8.8.8.8", "8.8.4.4"])
         self.ntp = self.config_override("ntp", ["0.arch.pool.ntp.org",

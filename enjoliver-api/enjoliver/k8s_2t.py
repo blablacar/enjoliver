@@ -47,7 +47,7 @@ class Kubernetes2Tiers:
         extra_md = {
             "etc_hosts": EC.etc_hosts,
             "extra_selectors": extra_selectors,
-            "coreos_install_base_url": EC.coreos_install_base_url,
+            "flatcar_install_base_url": EC.flatcar_install_base_url,
         }
         if EC.lldp_image_url:
             logger.debug("adding lldp_image_url: %s" % EC.lldp_image_url)
