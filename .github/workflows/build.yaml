@@ -1,0 +1,54 @@
+name: Build
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  python:
+    name: Python
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.6"
+
+      - name: Building
+        run: |
+          pip install tox
+          psql --host postgres --port 5432 -c 'create database enjoliver_testing'
+          cd enjoliver-api && tox
+
+  golang:
+    name: Golang
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.7.5"
+
+      - name: Building
+        run: make
